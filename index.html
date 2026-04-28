@@ -75,13 +75,14 @@
   td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--bg); }
-  .col-nome { width: 22%; }
-  .col-venda { width: 8%; }
+  .col-nome { width: 20%; }
+  .col-venda { width: 7%; }
   .col-parc { width: 6%; }
   .col-valor { width: 9%; text-align: right; }
   .col-venc { width: 9%; }
-  .col-status { width: 11%; }
-  .col-ult { width: 16%; }
+  .col-status { width: 10%; }
+  .col-serasa { width: 8%; text-align: center; }
+  .col-ult { width: 12%; }
   .col-acao { width: 19%; text-align: center; white-space: nowrap; }
   .valor-cell { font-weight: 600; color: var(--text); text-align: right; }
   .nome-cell { font-weight: 500; }
@@ -98,6 +99,8 @@
   .b-promessa  { background: var(--purple-bg); color: var(--purple-text); }
   .b-escalado  { background: var(--danger-bg); color: var(--danger); }
   .b-pago      { background: var(--accent-bg); color: var(--accent-text); }
+  .b-serasa-sim { background: #faeaea; color: #a02020; font-weight: 600; }
+  .b-serasa-nao { background: #f0f0ec; color: var(--text2); }
 
   /* Modal overlay */
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
@@ -212,6 +215,7 @@
           <th class="col-valor">Valor</th>
           <th class="col-venc">Vencimento</th>
           <th class="col-status">Status</th>
+          <th class="col-serasa">Serasa</th>
           <th class="col-ult">Última tratativa</th>
           <th class="col-acao">Ação</th>
         </tr>
@@ -262,6 +266,15 @@
           <button class="canal-btn" onclick="setCanal('Pessoal')" id="c-pessoal">Pessoal</button>
         </div>
       </div>
+      <div class="form-group">
+        <label>Cliente foi negativado no Serasa?</label>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="canal-btn" id="s-nao" onclick="setSerasa('nao')">Não</button>
+          <button type="button" class="canal-btn" id="s-sim" onclick="setSerasa('sim')">Sim ⚠️</button>
+          <button type="button" class="canal-btn active" id="s-sem" onclick="setSerasa('')">Não alterar</button>
+        </div>
+      </div>
+
       <div class="form-group">
         <label>Observação *</label>
         <textarea id="t-obs" placeholder="Ex: Cliente confirmou que paga na sexta-feira. Aguardando comprovante."></textarea>
@@ -343,6 +356,7 @@ const SCRIPT_URL = localStorage.getItem('crm_script_url') || '';
 let boletos = [];
 let boletoAtivo = null;
 let canalAtivo = 'WhatsApp';
+let serasaAtivo = '';
 let tabAtiva = 'nova';
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
@@ -408,11 +422,13 @@ async function salvarTratativa() {
   const resp = document.getElementById('t-resp').value.trim();
   const agora = new Date().toLocaleString('pt-BR');
 
+  const serasa = serasaAtivo;
+
   const payload = {
     action: 'addTratativa',
     boletoId: boletoAtivo.id,
     status, canal: canalAtivo, obs, dataProm, proximo, resp,
-    dataHora: agora
+    serasa, dataHora: agora
   };
   const r = await gsCall(payload);
   if (!r) return;
@@ -619,6 +635,7 @@ function renderTabela() {
       <td class="col-valor valor-cell">R$ ${normalizarValor(b.valor)}</td>
       <td class="col-venc">${normalizarData(b.vencimento)}</td>
       <td class="col-status"><span class="badge ${statusBadge[b.status]||'b-pendente'}">${statusLabel[b.status]||b.status}</span></td>
+      <td class="col-serasa">${b.serasa === 'sim' ? '<span class=\"badge b-serasa-sim\">Sim</span>' : b.serasa === 'nao' ? '<span class=\"badge b-serasa-nao\">Não</span>' : '<span style=\"color:var(--text3);font-size:12px;\">—</span>'}</td>
       <td class="col-ult ult-cell" title="${ult ? ult.obs : ''}">${ultTxt}</td>
       <td class="col-acao"><button class="btn-acao" onclick="abrirTratativa('${b.id}')">Registrar</button> <button class="btn-wa" onclick="copiarWhatsApp('${b.id}')">WA</button></td>
     </tr>`;
@@ -650,6 +667,7 @@ function abrirTratativa(id) {
   document.getElementById('mt-info').textContent = `Venda ${boletoAtivo.venda}${boletoAtivo.parcela ? ' · Parcela '+boletoAtivo.parcela : ''} · R$ ${boletoAtivo.valor} · Venc. ${boletoAtivo.vencimento}`;
   document.getElementById('t-status').value = boletoAtivo.status || 'pendente';
   document.getElementById('t-obs').value = '';
+  setSerasa('');
   document.getElementById('t-proximo').value = '';
   document.getElementById('t-dataprom').value = '';
   togglePromessa();
@@ -698,6 +716,14 @@ function setTab(t) {
     b.classList.toggle('active', ['nova','hist'][i] === t);
   });
   if (t === 'hist') renderHistModal();
+}
+
+function setSerasa(v) {
+  serasaAtivo = v;
+  ['sim','nao','sem'].forEach(x => {
+    const b = document.getElementById('s-' + x);
+    if (b) b.classList.toggle('active', x === (v || 'sem'));
+  });
 }
 
 function setCanal(c) {
