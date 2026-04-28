@@ -734,8 +734,9 @@ function setSerasa(v) {
 
 function setCanal(c) {
   canalAtivo = c;
+  const mapa = { 'WhatsApp': 'whatsapp', 'Ligação': 'ligacao', 'E-mail': 'email', 'Pessoal': 'pessoal' };
   ['whatsapp','ligacao','email','pessoal'].forEach(x => {
-    document.getElementById('c-'+x).classList.toggle('active', c.toLowerCase().startsWith(x.substring(0,4)));
+    document.getElementById('c-'+x).classList.toggle('active', mapa[c] === x);
   });
 }
 
