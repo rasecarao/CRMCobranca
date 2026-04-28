@@ -348,9 +348,9 @@
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-let SHEET_ID = localStorage.getItem('crm_sheet_id') || '';
-let API_KEY  = '';  // preenchido via Apps Script — não precisa de API key
-const SCRIPT_URL = localStorage.getItem('crm_script_url') || '';
+let SHEET_ID = '14MLJyA_OxD73loTp8ju__imxmnIL859KJMHMbjeTYCc';
+let API_KEY  = '';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxlcBL0dq8DjnPLQHqsRBh6LGSiuwl4gulN67vr2VryeG5kPJgW1nzL-yYG9kVc8_zVaA/exec';
 
 // Dados locais (cache)
 let boletos = [];
@@ -361,13 +361,11 @@ let tabAtiva = 'nova';
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 window.onload = () => {
-  const sid = localStorage.getItem('crm_sheet_id');
-  const surl = localStorage.getItem('crm_script_url');
-  if (sid && surl) {
-    document.getElementById('config-banner').classList.add('hidden');
-    document.getElementById('sheet-id-input').value = sid;
-    carregarDados();
-  }
+  // Credenciais embutidas — oculta banner e carrega direto
+  localStorage.setItem('crm_sheet_id', SHEET_ID);
+  localStorage.setItem('crm_script_url', SCRIPT_URL);
+  document.getElementById('config-banner').classList.add('hidden');
+  carregarDados();
 };
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
@@ -383,7 +381,7 @@ function salvarConfig() {
 
 // ─── GOOGLE APPS SCRIPT CALLS ─────────────────────────────────────────────────
 async function gsCall(payload) {
-  const url = localStorage.getItem('crm_script_url');
+  const url = SCRIPT_URL;
   if (!url) { notify('Configure a URL do script primeiro.'); return null; }
   mostrarLoading(true);
   try {
