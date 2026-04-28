@@ -76,15 +76,16 @@
   td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--bg); }
-  .col-nome { width: 26%; }
+  .col-nome { width: 20%; }
   .col-venda { width: 6%; }
   .col-parc { width: 5%; }
   .col-valor { width: 8%; text-align: right; }
   .col-venc { width: 9%; }
-  .col-status { width: 9%; }
-  .col-serasa { width: 6%; text-align: center; }
-  .col-ult { width: 16%; }
-  .col-acao { width: 15%; text-align: center; white-space: nowrap; }
+  .col-status { width: 8%; }
+  .col-serasa { width: 5%; text-align: center; }
+  .col-prox { width: 8%; }
+  .col-ult { width: 14%; }
+  .col-acao { width: 16%; text-align: center; white-space: nowrap; }
   .valor-cell { font-weight: 600; color: var(--text); text-align: right; }
   .nome-cell { font-weight: 500; }
   .ult-cell { font-size: 12px; color: var(--text2); }
@@ -208,6 +209,12 @@
         <option value="nao">Serasa: Não</option>
       </select>
     </div>
+    <select id="ordenacao" onchange="renderTabela()" title="Ordenar por">
+      <option value="venc-asc">Venc. mais antigo</option>
+      <option value="venc-desc">Venc. mais recente</option>
+      <option value="valor-desc">Maior valor</option>
+      <option value="valor-asc">Menor valor</option>
+    </select>
     <button class="btn" onclick="carregarDados()">↻ Atualizar</button>
   </div>
 
@@ -222,7 +229,8 @@
           <th class="col-venc">Vencimento</th>
           <th class="col-status">Status</th>
           <th class="col-serasa">Serasa</th>
-          <th class="col-ult">Última tratativa</th>
+          <th class="col-prox">Próx. Contato</th>
+          <th class="col-ult">Última Tratativa</th>
           <th class="col-acao">Ação</th>
         </tr>
       </thead>
@@ -277,7 +285,6 @@
         <div style="display:flex;gap:8px;">
           <button type="button" class="canal-btn" id="s-nao" onclick="setSerasa('nao')">Não</button>
           <button type="button" class="canal-btn" id="s-sim" onclick="setSerasa('sim')">Sim ⚠️</button>
-          <button type="button" class="canal-btn active" id="s-sem" onclick="setSerasa('')">Não alterar</button>
         </div>
       </div>
 
@@ -582,15 +589,25 @@ function normalizarValor(val) {
 
 function normalizarData(val) {
   if (!val || val === 'undefined' || val === '') return '—';
-  if (/^\d{2}\/\d{2}\/\d{2,4}$/.test(val)) return val;
-  const d = new Date(val);
+  const s = String(val).trim();
+  // Já no formato DD/MM/AAAA
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  // Formato BR com hora: DD/MM/AAAA HH:MM — retorna só a data
+  if (/^\d{2}\/\d{2}\/\d{4}[\s,]/.test(s)) return s.substring(0, 10);
+  // Formato ISO AAAA-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const p = s.split('-');
+    return p[2].substring(0, 2) + '/' + p[1] + '/' + p[0];
+  }
+  // Qualquer outro (ex: "Tue Apr 29 2025 00:00:00 GMT-0300") — parsear como Date
+  const d = new Date(s);
   if (!isNaN(d.getTime())) {
     const dia = String(d.getDate()).padStart(2, '0');
     const mes = String(d.getMonth() + 1).padStart(2, '0');
     const ano = d.getFullYear();
     return dia + '/' + mes + '/' + ano;
   }
-  return val;
+  return s;
 }
 
 const statusLabel = { pendente:'Pendente', contato:'Contato feito', promessa:'Promessa', escalado:'Escalado', pago:'Pago' };
@@ -610,20 +627,26 @@ function renderTabela() {
     return matchBusca && matchStatus && matchData && matchSerasa;
   });
 
-  // Ordena por data de vencimento (mais antiga primeiro), pagos vão para o final
+  // Ordenação dinâmica — pagos sempre no final
+  const ordem = document.getElementById('ordenacao') ? document.getElementById('ordenacao').value : 'venc-asc';
   lista.sort((a, b) => {
-    // Pagos sempre no final
     const aPago = a.status === 'pago' ? 1 : 0;
     const bPago = b.status === 'pago' ? 1 : 0;
     if (aPago !== bPago) return aPago - bPago;
-    // Converte DD/MM/AAAA para AAAA-MM-DD para comparar
+
     const toISO = v => {
       const d = normalizarData(v);
       if (!d || d === '—') return '9999-99-99';
       const p = d.split('/');
       return (p[2]||'2025') + '-' + p[1] + '-' + p[0];
     };
-    return toISO(a.vencimento).localeCompare(toISO(b.vencimento));
+    const toValor = v => parseFloat((normalizarValor(v||'0')).replace(/\./g,'').replace(',','.')) || 0;
+
+    if (ordem === 'venc-asc')   return toISO(a.vencimento).localeCompare(toISO(b.vencimento));
+    if (ordem === 'venc-desc')  return toISO(b.vencimento).localeCompare(toISO(a.vencimento));
+    if (ordem === 'valor-desc') return toValor(b.valor) - toValor(a.valor);
+    if (ordem === 'valor-asc')  return toValor(a.valor) - toValor(b.valor);
+    return 0;
   });
 
   const tbody = document.getElementById('tabela-body');
@@ -633,7 +656,8 @@ function renderTabela() {
   }
   tbody.innerHTML = lista.map(b => {
     const ult = b.tratativas && b.tratativas.length > 0 ? b.tratativas[b.tratativas.length-1] : null;
-    const ultTxt = ult ? `${ult.dataHora ? ult.dataHora.substring(0,10) : ''} ${ult.obs ? ult.obs.substring(0,30)+(ult.obs.length>30?'...':'') : ''}` : '—';
+    const ultDataFmt = ult && ult.dataHora ? normalizarData(ult.dataHora) : '';
+    const ultTxt = ult ? `${ultDataFmt} ${ult.obs ? ult.obs.substring(0,30)+(ult.obs.length>30?'...':'') : ''}`.trim() : '—';
     return `<tr>
       <td class="col-nome nome-cell" title="${b.nome}">${b.nome}</td>
       <td class="col-venda">${b.venda}</td>
@@ -642,6 +666,10 @@ function renderTabela() {
       <td class="col-venc">${normalizarData(b.vencimento)}</td>
       <td class="col-status"><span class="badge ${statusBadge[b.status]||'b-pendente'}">${statusLabel[b.status]||b.status}</span></td>
       <td class="col-serasa">${b.serasa === 'sim' ? '<span class=\"badge b-serasa-sim\">Sim</span>' : b.serasa === 'nao' ? '<span class=\"badge b-serasa-nao\">Não</span>' : '<span style=\"color:var(--text3);font-size:12px;\">—</span>'}</td>
+      <td class="col-prox" style="font-size:12px;color:var(--text2);">${(()=>{
+        const t = b.tratativas && b.tratativas.length > 0 ? b.tratativas[b.tratativas.length-1] : null;
+        return t && t.proximo ? normalizarData(t.proximo) : '—';
+      })()}</td>
       <td class="col-ult ult-cell" title="${ult ? ult.obs : ''}">${ultTxt}</td>
       <td class="col-acao"><button class="btn-acao" onclick="abrirTratativa('${b.id}')">Registrar</button> <button class="btn-wa" onclick="copiarWhatsApp('${b.id}')">WA</button></td>
     </tr>`;
@@ -701,14 +729,14 @@ function renderHistModal() {
   el.innerHTML = [...trts].reverse().map(t => `
     <div class="hist-item">
       <div class="hist-meta">
-        <span class="hist-date">${t.dataHora || ''}</span>
+        <span class="hist-date">${t.dataHora ? normalizarData(t.dataHora) : ''}</span>
         <span class="badge" style="background:#f0f0ec;color:var(--text2);">${t.canal || ''}</span>
         <span class="badge ${statusBadge[t.status]||'b-pendente'}">${statusLabel[t.status]||t.status}</span>
-        ${t.dataProm ? `<span style="font-size:11px;color:var(--text2);">Prom: ${t.dataProm}</span>` : ''}
+        ${t.dataProm ? `<span style="font-size:11px;color:var(--text2);">Prom: ${normalizarData(t.dataProm)}</span>` : ''}
         ${t.resp ? `<span style="font-size:11px;color:var(--text3);">${t.resp}</span>` : ''}
       </div>
       <p class="hist-obs">${t.obs}</p>
-      ${t.proximo ? `<p class="hist-next">Próx. contato: ${t.proximo}</p>` : ''}
+      ${t.proximo ? `<p class="hist-next">Próx. contato: ${normalizarData(t.proximo)}</p>` : ''}
     </div>
   `).join('');
 }
@@ -726,9 +754,9 @@ function setTab(t) {
 
 function setSerasa(v) {
   serasaAtivo = v;
-  ['sim','nao','sem'].forEach(x => {
+  ['sim','nao'].forEach(x => {
     const b = document.getElementById('s-' + x);
-    if (b) b.classList.toggle('active', x === (v || 'sem'));
+    if (b) b.classList.toggle('active', x === v);
   });
 }
 
