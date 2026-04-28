@@ -202,6 +202,11 @@
         <option value="pago">Pago</option>
       </select>
       <input type="date" id="filtro-data" onchange="renderTabela()" title="Filtrar por vencimento" />
+      <select id="filtro-serasa" onchange="renderTabela()">
+        <option value="">Serasa: Todos</option>
+        <option value="sim">Serasa: Sim</option>
+        <option value="nao">Serasa: Não</option>
+      </select>
     </div>
     <button class="btn" onclick="carregarDados()">↻ Atualizar</button>
   </div>
@@ -600,7 +605,9 @@ function renderTabela() {
     const matchBusca = !busca || b.nome.toLowerCase().includes(busca) || b.venda.includes(busca);
     const matchStatus = !fstatus || b.status === fstatus;
     const matchData = !fdata || b.vencimento === formatarData(fdata);
-    return matchBusca && matchStatus && matchData;
+    const fserasa = document.getElementById('filtro-serasa').value;
+    const matchSerasa = !fserasa || (b.serasa || 'nao') === fserasa;
+    return matchBusca && matchStatus && matchData && matchSerasa;
   });
 
   // Ordena por data de vencimento (mais antiga primeiro), pagos vão para o final
@@ -666,7 +673,7 @@ function abrirTratativa(id) {
   document.getElementById('mt-info').textContent = `Venda ${boletoAtivo.venda}${boletoAtivo.parcela ? ' · Parcela '+boletoAtivo.parcela : ''} · R$ ${boletoAtivo.valor} · Venc. ${boletoAtivo.vencimento}`;
   document.getElementById('t-status').value = boletoAtivo.status || 'pendente';
   document.getElementById('t-obs').value = '';
-  setSerasa('');
+  setSerasa(boletoAtivo.serasa || 'nao');
   document.getElementById('t-proximo').value = '';
   document.getElementById('t-dataprom').value = '';
   togglePromessa();
