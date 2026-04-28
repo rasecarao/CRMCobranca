@@ -346,7 +346,7 @@
 
 <!-- Modal WhatsApp -->
 <div class="overlay" id="modal-wa">
-  <div class="modal" style="width:480px;">
+  <div class="modal" style="width:500px;">
     <div class="modal-header">
       <div>
         <div class="modal-title">Mensagem para WhatsApp</div>
@@ -354,7 +354,12 @@
       </div>
       <button class="btn-close" onclick="fecharModal('modal-wa')">×</button>
     </div>
-    <div style="background:var(--surface2);border-radius:var(--radius);padding:1rem 1.25rem;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text);border:1px solid var(--border);margin-bottom:1rem;" id="wa-texto"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button onclick="setTomWA('amigavel')" id="wa-amigavel" style="flex:1;padding:7px;font-size:13px;border-radius:var(--radius-sm);border:1px solid var(--border2);cursor:pointer;background:var(--accent-bg);color:var(--accent);border-color:var(--accent);font-weight:500;">😊 Amigável</button>
+      <button onclick="setTomWA('firme')" id="wa-firme" style="flex:1;padding:7px;font-size:13px;border-radius:var(--radius-sm);border:1px solid var(--border2);cursor:pointer;background:var(--surface);color:var(--text2);">📋 Firme</button>
+      <button onclick="setTomWA('urgente')" id="wa-urgente" style="flex:1;padding:7px;font-size:13px;border-radius:var(--radius-sm);border:1px solid var(--border2);cursor:pointer;background:var(--surface);color:var(--text2);">⚠️ Urgente</button>
+    </div>
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:1rem 1.25rem;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text);border:1px solid var(--border);margin-bottom:1rem;max-height:320px;overflow-y:auto;" id="wa-texto"></div>
     <button class="btn btn-primary" style="width:100%;padding:10px;font-size:14px;" onclick="copiarTextoWA()">Copiar mensagem</button>
   </div>
 </div>
@@ -799,26 +804,81 @@ function notify(msg) {
   setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-function copiarWhatsApp(id) {
-  const b = boletos.find(x => x.id === id);
-  if (!b) return;
+let boletoWA = null;
+let tomWA = 'amigavel';
+
+function gerarTextoWA(b, tom) {
   const primeiroNome = b.nome.split(' ')[0];
   const parcela = normalizarParcela(b.parcela);
   const parcelaTexto = parcela && parcela !== '—' ? ` — Parcela *${parcela}*` : '';
-  const texto =
+  const venc = normalizarData(b.vencimento);
+  const valor = normalizarValor(b.valor);
+  const ref = `Venda *${b.venda}*${parcelaTexto}`;
+
+  if (tom === 'amigavel') return (
 `Olá, *${primeiroNome}*! 😊
 Aqui é da *Explosão Alimentos*, tudo bem?
 
 Gostaríamos de lembrá-lo(a) sobre um boleto que consta em aberto:
 
-🗓 Vencimento: *${normalizarData(b.vencimento)}*
-💰 Valor: *R$ ${normalizarValor(b.valor)}*
-📦 Ref.: Venda *${b.venda}*${parcelaTexto}
+🗓 Vencimento: *${venc}*
+💰 Valor: *R$ ${valor}*
+📦 Ref.: ${ref}
 
-Se precisar de segunda via ou quiser combinar o pagamento, é só falar! Estamos aqui para ajudar. 😊`;
+Se precisar de segunda via ou quiser combinar o pagamento, é só falar! Estamos aqui para ajudar. 😊`
+  );
 
-  document.getElementById('wa-sub').textContent = b.nome + ' · Venda ' + b.venda;
-  document.getElementById('wa-texto').textContent = texto;
+  if (tom === 'firme') return (
+`Olá, *${primeiroNome}*.
+Aqui é da *Explosão Alimentos*.
+
+Estamos entrando em contato pois o boleto abaixo segue em aberto em nosso sistema:
+
+🗓 Vencimento: *${venc}*
+💰 Valor: *R$ ${valor}*
+📦 Ref.: ${ref}
+
+Sabemos que imprevistos acontecem. Por isso, pedimos que entre em contato para que possamos encontrar a melhor solução — seja um novo prazo, parcelamento ou envio de segunda via.
+
+Aguardamos seu retorno para regularizar essa pendência. 🙏`
+  );
+
+  if (tom === 'urgente') return (
+`*${primeiroNome}*, bom dia.
+Aqui é da *Explosão Alimentos*.
+
+⚠️ Seu boleto encontra-se em atraso e, até o momento, não registramos nenhum contato ou pagamento de sua parte:
+
+🗓 Vencimento: *${venc}*
+💰 Valor: *R$ ${valor}*
+📦 Ref.: ${ref}
+
+Informamos que débitos nessa situação estão sujeitos a encaminhamento para protesto e negativação nos órgãos de crédito, caso ainda não tenha ocorrido.
+
+Para evitar maiores consequências, solicite a segunda via e regularize sua situação o quanto antes. Estamos disponíveis para tratar.`
+  );
+}
+
+function setTomWA(tom) {
+  tomWA = tom;
+  ['amigavel','firme','urgente'].forEach(t => {
+    const btn = document.getElementById('wa-' + t);
+    const ativo = t === tom;
+    btn.style.background = ativo ? 'var(--accent-bg)' : 'var(--surface)';
+    btn.style.color = ativo ? 'var(--accent)' : 'var(--text2)';
+    btn.style.borderColor = ativo ? 'var(--accent)' : 'var(--border2)';
+    btn.style.fontWeight = ativo ? '500' : '400';
+  });
+  if (boletoWA) document.getElementById('wa-texto').textContent = gerarTextoWA(boletoWA, tom);
+}
+
+function copiarWhatsApp(id) {
+  boletoWA = boletos.find(x => x.id === id);
+  if (!boletoWA) return;
+  tomWA = 'amigavel';
+  setTomWA('amigavel');
+  document.getElementById('wa-sub').textContent = boletoWA.nome + ' · Venda ' + boletoWA.venda;
+  document.getElementById('wa-texto').textContent = gerarTextoWA(boletoWA, tomWA);
   document.getElementById('modal-wa').classList.add('open');
 }
 
