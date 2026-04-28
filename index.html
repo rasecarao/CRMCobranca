@@ -604,7 +604,7 @@ function renderTabela() {
   let lista = boletos.filter(b => {
     const matchBusca = !busca || b.nome.toLowerCase().includes(busca) || b.venda.includes(busca);
     const matchStatus = !fstatus || b.status === fstatus;
-    const matchData = !fdata || b.vencimento === formatarData(fdata);
+    const matchData = !fdata || normalizarData(b.vencimento) === formatarData(fdata);
     const fserasa = document.getElementById('filtro-serasa').value;
     const matchSerasa = !fserasa || (b.serasa || 'nao') === fserasa;
     return matchBusca && matchStatus && matchData && matchSerasa;
