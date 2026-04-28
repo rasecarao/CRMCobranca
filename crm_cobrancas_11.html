@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM de Cobranças — Explosão Alimentos</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface2: #f1f0ed;
+    --border: #e2e0da;
+    --border2: #ccc9c0;
+    --text: #1a1a18;
+    --text2: #6b6960;
+    --text3: #9b9890;
+    --accent: #1a5c38;
+    --accent-bg: #e8f4ed;
+    --accent-text: #1a5c38;
+    --danger: #c0392b;
+    --danger-bg: #fdf0ee;
+    --warn-bg: #fef9ec;
+    --warn-text: #7a5c00;
+    --blue-bg: #eaf1fb;
+    --blue-text: #1a3f6f;
+    --purple-bg: #f0eefe;
+    --purple-text: #3c2e8a;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+  /* Layout */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 50; }
+  .topbar-brand { font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: -0.3px; }
+  .topbar-brand span { color: var(--text2); font-weight: 400; font-size: 13px; margin-left: 8px; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+  /* Config banner */
+  #config-banner { background: var(--warn-bg); border: 1px solid #f0d060; border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 12px; }
+  #config-banner.hidden { display: none; }
+  .banner-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .banner-text { flex: 1; }
+  .banner-text p { font-size: 13px; color: var(--warn-text); line-height: 1.6; }
+  .banner-text strong { color: var(--text); }
+  .banner-input-row { display: flex; gap: 8px; margin-top: 8px; }
+  .banner-input-row input { flex: 1; padding: 7px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; font-family: monospace; }
+  .banner-input-row button { padding: 7px 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; font-weight: 500; white-space: nowrap; }
+
+  /* Summary cards */
+  .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+  /* Toolbar */
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .toolbar-left { display: flex; gap: 8px; align-items: center; flex: 1; }
+  select, input[type=text], input[type=date] { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; background: var(--surface); color: var(--text); outline: none; }
+  select:focus, input:focus { border-color: var(--accent); }
+  .btn { padding: 7px 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; background: var(--surface); color: var(--text); cursor: pointer; font-weight: 500; transition: background 0.15s; white-space: nowrap; }
+  .btn:hover { background: var(--surface2); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { background: #155030; }
+
+  /* Table */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  thead tr { background: var(--surface2); }
+  th { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .col-nome { width: 22%; }
+  .col-venda { width: 8%; }
+  .col-parc { width: 6%; }
+  .col-valor { width: 9%; text-align: right; }
+  .col-venc { width: 9%; }
+  .col-status { width: 11%; }
+  .col-ult { width: 16%; }
+  .col-acao { width: 19%; text-align: center; white-space: nowrap; }
+  .valor-cell { font-weight: 600; color: var(--text); text-align: right; }
+  .nome-cell { font-weight: 500; }
+  .ult-cell { font-size: 12px; color: var(--text2); }
+  .btn-acao { padding: 4px 10px; font-size: 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
+  .btn-acao:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+  .btn-wa { padding: 4px 10px; font-size: 12px; border: 1px solid #25d366; border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; color: #128c42; }
+  .btn-wa:hover { background: #e8faf0; }
+
+  /* Badge */
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .b-pendente  { background: #fef0d0; color: #7a5200; }
+  .b-contato   { background: var(--blue-bg); color: var(--blue-text); }
+  .b-promessa  { background: var(--purple-bg); color: var(--purple-text); }
+  .b-escalado  { background: var(--danger-bg); color: var(--danger); }
+  .b-pago      { background: var(--accent-bg); color: var(--accent-text); }
+
+  /* Modal overlay */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+  .overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); width: 580px; max-width: 95vw; max-height: 90vh; overflow-y: auto; padding: 1.5rem; }
+  .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; }
+  .modal-title { font-size: 15px; font-weight: 600; }
+  .modal-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text2); padding: 0 4px; line-height: 1; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
+  .tab { padding: 7px 14px; font-size: 13px; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--text2); font-weight: 500; margin-bottom: -1px; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Form */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .form-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .form-group input, .form-group select, .form-group textarea { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; background: var(--surface); color: var(--text); }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .canal-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .canal-btn { padding: 5px 12px; font-size: 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; color: var(--text2); }
+  .canal-btn.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); font-weight: 500; }
+
+  /* Histórico */
+  .hist-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .hist-item:last-child { border-bottom: none; }
+  .hist-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .hist-date { font-size: 11px; color: var(--text3); }
+  .hist-obs { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .hist-next { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+  /* Modal add boleto */
+  .modal-add { width: 480px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text2); font-size: 14px; }
+
+  /* Loading */
+  .loading-bar { height: 3px; background: linear-gradient(90deg, var(--accent), #4ade80); border-radius: 2px; animation: load 1.2s infinite; width: 40%; margin: 0 auto 1rem; display: none; }
+  @keyframes load { 0%{margin-left:0;width:30%} 50%{margin-left:35%;width:30%} 100%{margin-left:70%;width:30%} }
+  .loading-bar.show { display: block; }
+
+  /* Notify */
+  .notify { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: #fff; padding: 10px 18px; border-radius: var(--radius-sm); font-size: 13px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .notify.show { opacity: 1; }
+
+  @media (max-width: 768px) {
+    .main { padding: 1rem; }
+    .summary-grid { grid-template-columns: repeat(3, 1fr); }
+    .col-parc, .col-vend, .col-ult { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">Explosão Alimentos <span>CRM de Cobranças</span></div>
+  <div class="topbar-actions">
+    <span id="sync-status" style="font-size:12px;color:var(--text3);"></span>
+    <button class="btn btn-primary" onclick="abrirAddBoleto()">+ Adicionar boletos</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <div id="config-banner">
+    <div class="banner-icon">⚙️</div>
+    <div class="banner-text">
+      <p><strong>Configure a integração com o Google Sheets</strong> para começar a usar. Siga o guia de configuração que acompanha este arquivo e cole o ID da sua planilha abaixo.</p>
+      <div class="banner-input-row">
+        <input type="text" id="sheet-id-input" placeholder="Cole aqui o ID da planilha (ex: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms)" />
+        <button onclick="salvarConfig()">Salvar e conectar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-bar" id="loading"></div>
+
+  <div class="summary-grid" id="summary-grid">
+    <div class="stat-card"><div class="stat-label">Total em aberto</div><div class="stat-value" id="s-total">—</div><div class="stat-sub">boletos</div></div>
+    <div class="stat-card"><div class="stat-label">Valor total</div><div class="stat-value" id="s-valor">—</div><div class="stat-sub">R$</div></div>
+    <div class="stat-card"><div class="stat-label">Pendentes</div><div class="stat-value" id="s-pend">—</div><div class="stat-sub">sem contato</div></div>
+    <div class="stat-card"><div class="stat-label">Promessas</div><div class="stat-value" id="s-prom">—</div><div class="stat-sub">aguardando</div></div>
+    <div class="stat-card"><div class="stat-label">Pagos hoje</div><div class="stat-value" id="s-pago">—</div><div class="stat-sub">confirmados</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <input type="text" id="busca" placeholder="Buscar cliente ou venda..." style="width:220px;" oninput="renderTabela()" />
+      <select id="filtro-status" onchange="renderTabela()">
+        <option value="">Todos os status</option>
+        <option value="pendente">Pendente</option>
+        <option value="contato">Contato feito</option>
+        <option value="promessa">Promessa</option>
+        <option value="escalado">Escalado</option>
+        <option value="pago">Pago</option>
+      </select>
+      <input type="date" id="filtro-data" onchange="renderTabela()" title="Filtrar por vencimento" />
+    </div>
+    <button class="btn" onclick="carregarDados()">↻ Atualizar</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-nome">Cliente</th>
+          <th class="col-venda">Venda</th>
+          <th class="col-parc">Parc.</th>
+          <th class="col-valor">Valor</th>
+          <th class="col-venc">Vencimento</th>
+          <th class="col-status">Status</th>
+          <th class="col-ult">Última tratativa</th>
+          <th class="col-acao">Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-body"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Modal tratativa -->
+<div class="overlay" id="modal-trat">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="mt-nome"></div>
+        <div class="modal-sub" id="mt-info"></div>
+      </div>
+      <button class="btn-close" onclick="fecharModal('modal-trat')">×</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="setTab('nova')">Nova tratativa</button>
+      <button class="tab" onclick="setTab('hist')">Histórico</button>
+    </div>
+    <div id="tab-nova">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <select id="t-status" onchange="togglePromessa()">
+            <option value="pendente">Pendente</option>
+            <option value="contato">Contato feito</option>
+            <option value="promessa">Promessa de pagamento</option>
+            <option value="escalado">Escalado</option>
+            <option value="pago">Pago ✓</option>
+          </select>
+        </div>
+        <div class="form-group" id="div-promessa" style="display:none;">
+          <label>Data da promessa</label>
+          <input type="date" id="t-dataprom" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Canal de contato</label>
+        <div class="canal-row">
+          <button class="canal-btn active" onclick="setCanal('WhatsApp')" id="c-whatsapp">WhatsApp</button>
+          <button class="canal-btn" onclick="setCanal('Ligação')" id="c-ligacao">Ligação</button>
+          <button class="canal-btn" onclick="setCanal('E-mail')" id="c-email">E-mail</button>
+          <button class="canal-btn" onclick="setCanal('Pessoal')" id="c-pessoal">Pessoal</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observação *</label>
+        <textarea id="t-obs" placeholder="Ex: Cliente confirmou que paga na sexta-feira. Aguardando comprovante."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Próximo contato</label>
+          <input type="date" id="t-proximo" />
+        </div>
+        <div class="form-group">
+          <label>Responsável</label>
+          <input type="text" id="t-resp" placeholder="Seu nome ou da assistente" />
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:10px;" onclick="salvarTratativa()">Salvar tratativa</button>
+    </div>
+    <div id="tab-hist" style="display:none;">
+      <div id="hist-lista"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal adicionar boletos -->
+<div class="overlay" id="modal-add">
+  <div class="modal modal-add">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Adicionar boletos</div>
+        <div class="modal-sub">Cole os dados do Fácil123 ou preencha manualmente</div>
+      </div>
+      <button class="btn-close" onclick="fecharModal('modal-add')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Colar dados do Fácil123 — selecione e cole o bloco completo da tela</label>
+      <textarea id="add-paste" rows="8" placeholder="27/04	Receitas: Vendas&#10;ELIAS MARTINS RESENDE * Venda 43705 * 1/3&#10;1.001,50&#10;27/04	Receitas: Vendas&#10;ISA COMERCIO * Venda 43747 * 1/3&#10;483,20"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+      <span style="font-size:12px;color:var(--text3);">ou preencha manualmente</span>
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Nome do cliente</label><input type="text" id="add-nome" /></div>
+      <div class="form-group"><label>Nº da venda</label><input type="text" id="add-venda" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Parcela (ex: 1/3)</label><input type="text" id="add-parcela" /></div>
+      <div class="form-group"><label>Valor (R$)</label><input type="text" id="add-valor" placeholder="1.250,00" /></div>
+    </div>
+    <div class="form-group"><label>Data de vencimento</label><input type="date" id="add-venc" /></div>
+    <button class="btn btn-primary" style="width:100%;padding:10px;margin-top:4px;" onclick="salvarBoletos()">Salvar na planilha</button>
+  </div>
+</div>
+
+<div class="notify" id="notify"></div>
+
+<!-- Modal WhatsApp -->
+<div class="overlay" id="modal-wa">
+  <div class="modal" style="width:480px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Mensagem para WhatsApp</div>
+        <div class="modal-sub" id="wa-sub"></div>
+      </div>
+      <button class="btn-close" onclick="fecharModal('modal-wa')">×</button>
+    </div>
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:1rem 1.25rem;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text);border:1px solid var(--border);margin-bottom:1rem;" id="wa-texto"></div>
+    <button class="btn btn-primary" style="width:100%;padding:10px;font-size:14px;" onclick="copiarTextoWA()">Copiar mensagem</button>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+let SHEET_ID = localStorage.getItem('crm_sheet_id') || '';
+let API_KEY  = '';  // preenchido via Apps Script — não precisa de API key
+const SCRIPT_URL = localStorage.getItem('crm_script_url') || '';
+
+// Dados locais (cache)
+let boletos = [];
+let boletoAtivo = null;
+let canalAtivo = 'WhatsApp';
+let tabAtiva = 'nova';
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  const sid = localStorage.getItem('crm_sheet_id');
+  const surl = localStorage.getItem('crm_script_url');
+  if (sid && surl) {
+    document.getElementById('config-banner').classList.add('hidden');
+    document.getElementById('sheet-id-input').value = sid;
+    carregarDados();
+  }
+};
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+function salvarConfig() {
+  const sid = document.getElementById('sheet-id-input').value.trim();
+  const urlInput = prompt('Cole a URL do Google Apps Script (Web App URL):');
+  if (!sid || !urlInput) { notify('Preencha o ID da planilha e a URL do script.'); return; }
+  localStorage.setItem('crm_sheet_id', sid);
+  localStorage.setItem('crm_script_url', urlInput);
+  document.getElementById('config-banner').classList.add('hidden');
+  carregarDados();
+}
+
+// ─── GOOGLE APPS SCRIPT CALLS ─────────────────────────────────────────────────
+async function gsCall(payload) {
+  const url = localStorage.getItem('crm_script_url');
+  if (!url) { notify('Configure a URL do script primeiro.'); return null; }
+  mostrarLoading(true);
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json();
+    return data;
+  } catch(e) {
+    notify('Erro ao conectar com o Google Sheets. Verifique a URL do script.');
+    return null;
+  } finally {
+    mostrarLoading(false);
+  }
+}
+
+async function carregarDados() {
+  const url = localStorage.getItem('crm_script_url');
+  if (!url) return;
+  setSyncStatus('Carregando...');
+  const data = await gsCall({ action: 'getBoletos' });
+  if (!data) { setSyncStatus('Erro'); return; }
+  boletos = data.boletos || [];
+  renderTabela();
+  renderSummary();
+  setSyncStatus('Sincronizado ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}));
+}
+
+async function salvarTratativa() {
+  const obs = document.getElementById('t-obs').value.trim();
+  if (!obs) { notify('Preencha a observação.'); return; }
+  const status = document.getElementById('t-status').value;
+  const dataProm = document.getElementById('t-dataprom').value;
+  const proximo = document.getElementById('t-proximo').value;
+  const resp = document.getElementById('t-resp').value.trim();
+  const agora = new Date().toLocaleString('pt-BR');
+
+  const payload = {
+    action: 'addTratativa',
+    boletoId: boletoAtivo.id,
+    status, canal: canalAtivo, obs, dataProm, proximo, resp,
+    dataHora: agora
+  };
+  const r = await gsCall(payload);
+  if (!r) return;
+  notify('Tratativa salva!');
+  document.getElementById('t-obs').value = '';
+  document.getElementById('t-proximo').value = '';
+  document.getElementById('t-dataprom').value = '';
+  await carregarDados();
+  // Atualiza modal se ainda aberto
+  boletoAtivo = boletos.find(b => b.id === boletoAtivo.id) || boletoAtivo;
+  renderHistModal();
+  setTab('hist');
+}
+
+async function salvarBoletos() {
+  const paste = document.getElementById('add-paste').value.trim();
+  const novos = [];
+
+  if (paste) {
+    novos.push(...parseBlocoFacil123(paste));
+  } else {
+    const nome  = document.getElementById('add-nome').value.trim();
+    const venda = document.getElementById('add-venda').value.trim();
+    const parc  = document.getElementById('add-parcela').value.trim();
+    const valor = document.getElementById('add-valor').value.trim();
+    const venc  = document.getElementById('add-venc').value;
+    if (!nome || !venda || !valor || !venc) { notify('Preencha todos os campos obrigatórios.'); return; }
+    novos.push({ nome, venda, parcela: parc, valor, vencimento: formatarData(venc) });
+  }
+
+  if (novos.length === 0) { notify('Nenhum dado válido encontrado. Verifique o formato colado.'); return; }
+
+  const r = await gsCall({ action: 'addBoletos', boletos: novos });
+  if (!r) return;
+
+  const qtdAdicionados = r.adicionados ? r.adicionados.length : 0;
+  const duplicados = r.duplicados || [];
+
+  if (qtdAdicionados === 0 && duplicados.length > 0) {
+    notify(`⚠️ Nenhum boleto novo — ${duplicados.length} já estavam cadastrados.`);
+  } else if (duplicados.length > 0) {
+    notify(`✓ ${qtdAdicionados} adicionado(s). Ignorados (já existiam): ${duplicados.join(', ')}`);
+  } else {
+    notify(`✓ ${qtdAdicionados} boleto(s) adicionado(s)!`);
+  }
+
+  fecharModal('modal-add');
+  limparFormAdd();
+  await carregarDados();
+}
+
+function parseBlocoFacil123(texto) {
+  // Normaliza: remove \r, divide por \n, limpa espaços
+  const linhas = texto.replace(/\r/g, '').split('\n').map(l => l.trim()).filter(l => l);
+  const resultado = [];
+  let i = 0;
+
+  while (i < linhas.length) {
+    // Linha de data: começa com DD/MM seguido de tab ou espaço e "Receitas"
+    // Ex: "27/04\tReceitas: Vendas"  ou só "27/04/2025\tReceitas: Vendas"
+    const dataMatch = linhas[i].match(/^(\d{2}\/\d{2}(?:\/\d{4})?)\s/);
+
+    if (dataMatch) {
+      const dataRaw = dataMatch[1]; // "27/04" ou "27/04/2025"
+      // Monta data completa
+      const partes = dataRaw.split('/');
+      const ano = partes[2] ? partes[2] : new Date().getFullYear().toString();
+      const vencimento = partes[0] + '/' + partes[1] + '/' + ano;
+
+      i++; // próxima linha = nome * venda
+      if (i >= linhas.length) break;
+
+      const vendaMatch = linhas[i].match(/^(.+?)\s*\*\s*Venda\s+(\d+)(?:\s*\*\s*(\d+\/\d+))?/i);
+      if (vendaMatch) {
+        let nome = vendaMatch[1].trim();
+        // Remove CPF/CNPJ prefixos numéricos (ex: "51.307.054 MARIA...")
+        nome = nome.replace(/^\d[\d.\/\-]*\s+/, '').trim();
+        // Capitaliza
+        nome = nome.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+
+        const venda   = vendaMatch[2];
+        const parcela = vendaMatch[3] || '';
+
+        i++; // próxima linha = valor
+        let valor = '';
+        if (i < linhas.length) {
+          // Valor: pode ser "1.001,50" ou "1001,50" — pega linha que parece número
+          const valorMatch = linhas[i].match(/^[\d.,]+$/);
+          if (valorMatch) {
+            valor = linhas[i].replace(/\./g, '').replace(',', ','); // mantém formato BR
+            i++;
+          }
+        }
+
+        resultado.push({ nome, venda, parcela, valor, vencimento });
+      } else {
+        i++; // linha inesperada, avança
+      }
+    } else {
+      // Tenta parsear linha avulsa no formato antigo (sem linha de data acima)
+      const vendaMatch = linhas[i].match(/^(.+?)\s*\*\s*Venda\s+(\d+)(?:\s*\*\s*(\d+\/\d+))?/i);
+      if (vendaMatch) {
+        let nome = vendaMatch[1].trim().replace(/^\d[\d.\/\-]*\s+/, '').trim();
+        nome = nome.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        resultado.push({ nome, venda: vendaMatch[2], parcela: vendaMatch[3] || '', valor: '', vencimento: '' });
+      }
+      i++;
+    }
+  }
+
+  return resultado;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function normalizarParcela(val) {
+  if (!val || val === 'undefined' || val === '') return '—';
+  const s = String(val).trim();
+  // Formato correto: 1/3, 2/4, etc.
+  if (/^\d+\/\d+$/.test(s)) return s;
+  // Se vier como Date do Sheets, extrai apenas os números da string
+  // "Sun May 01..." -> tenta extrair padrão N/N de dentro
+  const m = s.match(/(\d+)\/(\d+)/);
+  if (m) return m[1] + '/' + m[2];
+  // Sem barra — pode ser só um número (parcela única), retorna '—'
+  return '—';
+}
+
+function normalizarValor(val) {
+  if (!val || val === 'undefined' || val === '') return '—';
+  // Remove qualquer coisa que não seja dígito, ponto ou vírgula
+  let v = String(val).replace(/[^\d.,]/g, '').trim();
+  // Troca ponto por vírgula se vier como separador decimal (ex: 1001.5 ou 515.63)
+  // Detecta se o ponto é decimal: só há um ponto e ele está seguido de 1-2 dígitos no fim
+  if (/^\d+\.\d{1,2}$/.test(v)) {
+    v = v.replace('.', ',');
+  }
+  // Já tem vírgula — normaliza casas decimais
+  if (v.includes(',')) {
+    const partes = v.split(',');
+    v = partes[0] + ',' + partes[1].padEnd(2, '0').substring(0, 2);
+  } else {
+    // Número inteiro — adiciona ,00
+    v = v + ',00';
+  }
+  return v;
+}
+
+function normalizarData(val) {
+  if (!val || val === 'undefined' || val === '') return '—';
+  if (/^\d{2}\/\d{2}\/\d{2,4}$/.test(val)) return val;
+  const d = new Date(val);
+  if (!isNaN(d.getTime())) {
+    const dia = String(d.getDate()).padStart(2, '0');
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const ano = d.getFullYear();
+    return dia + '/' + mes + '/' + ano;
+  }
+  return val;
+}
+
+const statusLabel = { pendente:'Pendente', contato:'Contato feito', promessa:'Promessa', escalado:'Escalado', pago:'Pago' };
+const statusBadge = { pendente:'b-pendente', contato:'b-contato', promessa:'b-promessa', escalado:'b-escalado', pago:'b-pago' };
+
+function renderTabela() {
+  const busca  = document.getElementById('busca').value.toLowerCase();
+  const fstatus = document.getElementById('filtro-status').value;
+  const fdata  = document.getElementById('filtro-data').value;
+
+  let lista = boletos.filter(b => {
+    const matchBusca = !busca || b.nome.toLowerCase().includes(busca) || b.venda.includes(busca);
+    const matchStatus = !fstatus || b.status === fstatus;
+    const matchData = !fdata || b.vencimento === formatarData(fdata);
+    return matchBusca && matchStatus && matchData;
+  });
+
+  // Ordena por data de vencimento (mais antiga primeiro), pagos vão para o final
+  lista.sort((a, b) => {
+    // Pagos sempre no final
+    const aPago = a.status === 'pago' ? 1 : 0;
+    const bPago = b.status === 'pago' ? 1 : 0;
+    if (aPago !== bPago) return aPago - bPago;
+    // Converte DD/MM/AAAA para AAAA-MM-DD para comparar
+    const toISO = v => {
+      const d = normalizarData(v);
+      if (!d || d === '—') return '9999-99-99';
+      const p = d.split('/');
+      return (p[2]||'2025') + '-' + p[1] + '-' + p[0];
+    };
+    return toISO(a.vencimento).localeCompare(toISO(b.vencimento));
+  });
+
+  const tbody = document.getElementById('tabela-body');
+  if (lista.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty">Nenhum boleto encontrado.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(b => {
+    const ult = b.tratativas && b.tratativas.length > 0 ? b.tratativas[b.tratativas.length-1] : null;
+    const ultTxt = ult ? `${ult.dataHora ? ult.dataHora.substring(0,10) : ''} ${ult.obs ? ult.obs.substring(0,30)+(ult.obs.length>30?'...':'') : ''}` : '—';
+    return `<tr>
+      <td class="col-nome nome-cell" title="${b.nome}">${b.nome}</td>
+      <td class="col-venda">${b.venda}</td>
+      <td class="col-parc">${normalizarParcela(b.parcela)}</td>
+      <td class="col-valor valor-cell">R$ ${normalizarValor(b.valor)}</td>
+      <td class="col-venc">${normalizarData(b.vencimento)}</td>
+      <td class="col-status"><span class="badge ${statusBadge[b.status]||'b-pendente'}">${statusLabel[b.status]||b.status}</span></td>
+      <td class="col-ult ult-cell" title="${ult ? ult.obs : ''}">${ultTxt}</td>
+      <td class="col-acao"><button class="btn-acao" onclick="abrirTratativa('${b.id}')">Registrar</button> <button class="btn-wa" onclick="copiarWhatsApp('${b.id}')">WA</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSummary() {
+  const ativos = boletos.filter(b => b.status !== 'pago');
+  const total = ativos.length;
+  const valor = ativos.reduce((s, b) => {
+    const v = normalizarValor(b.valor || '0').replace(/\./g,'').replace(',','.');
+    return s + (parseFloat(v) || 0);
+  }, 0);
+  const pend  = boletos.filter(b => b.status === 'pendente').length;
+  const prom  = boletos.filter(b => b.status === 'promessa').length;
+  const pago  = boletos.filter(b => b.status === 'pago').length;
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-valor').textContent = valor.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('s-pend').textContent  = pend;
+  document.getElementById('s-prom').textContent  = prom;
+  document.getElementById('s-pago').textContent  = pago;
+}
+
+// ─── MODAIS ───────────────────────────────────────────────────────────────────
+function abrirTratativa(id) {
+  boletoAtivo = boletos.find(b => b.id === id);
+  if (!boletoAtivo) return;
+  document.getElementById('mt-nome').textContent = boletoAtivo.nome;
+  document.getElementById('mt-info').textContent = `Venda ${boletoAtivo.venda}${boletoAtivo.parcela ? ' · Parcela '+boletoAtivo.parcela : ''} · R$ ${boletoAtivo.valor} · Venc. ${boletoAtivo.vencimento}`;
+  document.getElementById('t-status').value = boletoAtivo.status || 'pendente';
+  document.getElementById('t-obs').value = '';
+  document.getElementById('t-proximo').value = '';
+  document.getElementById('t-dataprom').value = '';
+  togglePromessa();
+  setCanal('WhatsApp');
+  setTab('nova');
+  document.getElementById('modal-trat').classList.add('open');
+}
+
+function abrirAddBoleto() {
+  limparFormAdd();
+  document.getElementById('modal-add').classList.add('open');
+}
+
+function fecharModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function renderHistModal() {
+  const el = document.getElementById('hist-lista');
+  const trts = (boletoAtivo.tratativas || []);
+  if (trts.length === 0) {
+    el.innerHTML = '<p style="text-align:center;color:var(--text2);padding:2rem 0;font-size:13px;">Nenhuma tratativa registrada.</p>';
+    return;
+  }
+  el.innerHTML = [...trts].reverse().map(t => `
+    <div class="hist-item">
+      <div class="hist-meta">
+        <span class="hist-date">${t.dataHora || ''}</span>
+        <span class="badge" style="background:#f0f0ec;color:var(--text2);">${t.canal || ''}</span>
+        <span class="badge ${statusBadge[t.status]||'b-pendente'}">${statusLabel[t.status]||t.status}</span>
+        ${t.dataProm ? `<span style="font-size:11px;color:var(--text2);">Prom: ${t.dataProm}</span>` : ''}
+        ${t.resp ? `<span style="font-size:11px;color:var(--text3);">${t.resp}</span>` : ''}
+      </div>
+      <p class="hist-obs">${t.obs}</p>
+      ${t.proximo ? `<p class="hist-next">Próx. contato: ${t.proximo}</p>` : ''}
+    </div>
+  `).join('');
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function setTab(t) {
+  tabAtiva = t;
+  document.getElementById('tab-nova').style.display = t==='nova' ? 'block' : 'none';
+  document.getElementById('tab-hist').style.display = t==='hist' ? 'block' : 'none';
+  document.querySelectorAll('.tabs .tab').forEach((b,i) => {
+    b.classList.toggle('active', ['nova','hist'][i] === t);
+  });
+  if (t === 'hist') renderHistModal();
+}
+
+function setCanal(c) {
+  canalAtivo = c;
+  ['whatsapp','ligacao','email','pessoal'].forEach(x => {
+    document.getElementById('c-'+x).classList.toggle('active', c.toLowerCase().startsWith(x.substring(0,4)));
+  });
+}
+
+function togglePromessa() {
+  const s = document.getElementById('t-status').value;
+  document.getElementById('div-promessa').style.display = s==='promessa' ? 'flex' : 'none';
+}
+
+function formatarData(d) {
+  if (!d) return '';
+  const [a,m,dia] = d.split('-');
+  return dia+'/'+m+'/'+a;
+}
+
+function limparFormAdd() {
+  ['add-paste','add-nome','add-venda','add-parcela','add-valor'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('add-venc').value = '';
+}
+
+function mostrarLoading(show) {
+  document.getElementById('loading').classList.toggle('show', show);
+}
+
+function setSyncStatus(txt) {
+  document.getElementById('sync-status').textContent = txt;
+}
+
+function notify(msg) {
+  const el = document.getElementById('notify');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function copiarWhatsApp(id) {
+  const b = boletos.find(x => x.id === id);
+  if (!b) return;
+  const primeiroNome = b.nome.split(' ')[0];
+  const parcela = normalizarParcela(b.parcela);
+  const parcelaTexto = parcela && parcela !== '—' ? ` — Parcela *${parcela}*` : '';
+  const texto =
+`Olá, *${primeiroNome}*! 😊
+Aqui é da *Explosão Alimentos*, tudo bem?
+
+Gostaríamos de lembrá-lo(a) sobre um boleto que consta em aberto:
+
+🗓 Vencimento: *${normalizarData(b.vencimento)}*
+💰 Valor: *R$ ${normalizarValor(b.valor)}*
+📦 Ref.: Venda *${b.venda}*${parcelaTexto}
+
+Se precisar de segunda via ou quiser combinar o pagamento, é só falar! Estamos aqui para ajudar. 😊`;
+
+  document.getElementById('wa-sub').textContent = b.nome + ' · Venda ' + b.venda;
+  document.getElementById('wa-texto').textContent = texto;
+  document.getElementById('modal-wa').classList.add('open');
+}
+
+function copiarTextoWA() {
+  const texto = document.getElementById('wa-texto').textContent;
+  navigator.clipboard.writeText(texto).then(() => {
+    const btn = document.querySelector('#modal-wa .btn-primary');
+    btn.textContent = '✓ Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar mensagem', 2000);
+  });
+}
+
+// Fechar modal clicando fora
+document.querySelectorAll('.overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
