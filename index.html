@@ -245,6 +245,7 @@
       <div class="stat-label" style="color:var(--danger);">🔴 Vencidos</div>
       <div class="stat-value" id="s-venc">—</div>
       <div class="stat-sub" id="s-venc-valor">boletos</div>
+      <div id="s-venc-pct" style="margin-top:5px;font-size:11px;font-weight:600;color:var(--danger);"></div>
     </div>
     <div class="stat-card" style="border-top:3px solid var(--blue-text); grid-column: span 2;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -950,6 +951,12 @@ function renderSummary() {
   const fmt = (n, v) => { const el = document.getElementById(n); if(el) el.textContent = v; };
   fmt('s-venc',       vencidos.length);
   fmt('s-venc-valor', fmtBR(vencidos.reduce((s,b)=>s+toFloat(b),0)));
+
+  // % inadimplência = valor vencido / (valor vencido + valor a receber)
+  const totalGeral = boletos.filter(b => b.status !== 'pago').reduce((s,b) => s+toFloat(b), 0);
+  const valorVencido = vencidos.reduce((s,b) => s+toFloat(b), 0);
+  const pct = totalGeral > 0 ? (valorVencido / totalGeral * 100).toFixed(1) : 0;
+  fmt('s-venc-pct', pct + '% de inadimplência');
   fmt('s-pago',       pagos.length);
   fmt('s-pago-valor', fmtBR(pagos.reduce((s,b)=>s+toFloat(b),0)) + ' baixados');
   fmt('s-pend',       boletos.filter(b=>b.status==='pendente').length);
