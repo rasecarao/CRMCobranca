@@ -705,12 +705,16 @@ function renderTabela() {
     const btnPago = isPago
       ? `<button class="btn-acao" onclick="abrirTratativa('${b.id}')" style="opacity:0.5;">Ver</button>`
       : `<button class="btn-pago" onclick="marcarPagoRapido('${b.id}')" title="Marcar como pago">✓ Pago</button> <button class="btn-acao" onclick="abrirTratativa('${b.id}')">Registrar</button> <button class="btn-wa" onclick="copiarWhatsApp('${b.id}')">WA</button>`;
+    const dataPagamento = isPago && ult ? normalizarData(ult.dataHora) : null;
+    const celVenc = isPago
+      ? `<span style="color:#128c42;font-weight:500;" title="Venc.: ${normalizarData(b.vencimento)}">✓ ${dataPagamento || normalizarData(b.vencimento)}</span>`
+      : normalizarData(b.vencimento);
     return `<tr class="${isPago ? 'linha-paga' : ''}">
       <td class="col-nome nome-cell" title="${b.nome}">${b.nome}</td>
       <td class="col-venda">${b.venda}</td>
       <td class="col-parc">${normalizarParcela(b.parcela)}</td>
       <td class="col-valor valor-cell">R$ ${normalizarValor(b.valor)}</td>
-      <td class="col-venc">${normalizarData(b.vencimento)}</td>
+      <td class="col-venc">${celVenc}</td>
       <td class="col-status"><span class="badge ${statusBadge[b.status]||'b-pendente'}">${statusLabel[b.status]||b.status}</span></td>
       <td class="col-serasa">${b.serasa === 'sim' ? '<span class="badge b-serasa-sim">Sim</span>' : b.serasa === 'nao' ? '<span class="badge b-serasa-nao">Não</span>' : '<span style="color:var(--text3);font-size:12px;">—</span>'}</td>
       <td class="col-prox" style="font-size:12px;color:var(--text2);">${(()=>{
