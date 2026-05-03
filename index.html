@@ -230,10 +230,75 @@
   .notify { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: #fff; padding: 10px 18px; border-radius: var(--radius-sm); font-size: 13px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
   .notify.show { opacity: 1; }
 
+  /* ══════════════════════════════════════════
+     MOBILE — tudo abaixo de 768px
+  ══════════════════════════════════════════ */
   @media (max-width: 768px) {
-    .main { padding: 1rem; }
-    .summary-grid { grid-template-columns: repeat(3, 1fr); }
-    .col-parc, .col-vend, .col-ult { display: none; }
+    .main { padding: 0.75rem; }
+
+    /* Topbar */
+    .topbar { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 12px; }
+    .topbar-brand { font-size: 14px; }
+    .topbar-brand img { height: 36px; }
+    .topbar-actions { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+    .topbar-actions .btn, .topbar-actions .btn-primary { flex: 1 1 auto; font-size: 12px; padding: 7px 8px; text-align: center; }
+
+    /* Summary grid — 2 colunas */
+    .summary-grid { grid-template-columns: 1fr 1fr; }
+    .stat-card[style*="grid-column: span 2"] { grid-column: span 2; }
+
+    /* Toolbar */
+    .toolbar { flex-wrap: wrap; gap: 8px; }
+    .toolbar-left { width: 100%; }
+    .toolbar-left input { width: 100% !important; box-sizing: border-box; }
+    .toolbar .btn { flex: 1; font-size: 12px; }
+
+    /* Esconde a tabela no mobile */
+    .table-wrap { display: none; }
+
+    /* Cards mobile de boletos */
+    .boleto-cards { display: flex; flex-direction: column; gap: 10px; }
+
+    .boleto-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      position: relative;
+    }
+    .boleto-card.alerta-hoje { border-left: 4px solid #f0a500; background: #fffbe6; }
+    .boleto-card.alerta-atrasado { border-left: 4px solid var(--danger); background: #fff5f5; }
+    .boleto-card.linha-paga { opacity: 0.5; }
+
+    .bc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .bc-nome { font-weight: 600; font-size: 14px; color: var(--text); flex: 1; padding-right: 8px; }
+    .bc-valor { font-weight: 700; font-size: 16px; color: var(--text); white-space: nowrap; }
+
+    .bc-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; font-size: 12px; color: var(--text2); }
+    .bc-venda { background: var(--surface2); border-radius: 4px; padding: 2px 6px; font-size: 11px; }
+
+    .bc-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .bc-acoes { display: flex; gap: 6px; }
+    .bc-acoes .btn-pago { font-size: 12px; }
+    .bc-acoes .btn-acao { font-size: 12px; }
+    .bc-acoes .btn-wa { font-size: 12px; }
+
+    .bc-ult { font-size: 11px; color: var(--text3); margin-top: 4px; font-style: italic; }
+
+    .separador-pago-mob { text-align: center; font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 0 4px; border-top: 2px solid var(--border); margin-top: 4px; }
+
+    /* Modais — full screen no mobile */
+    .modal { width: 100% !important; max-width: 100vw !important; max-height: 100vh !important; border-radius: 0 !important; margin: 0 !important; height: 100vh; overflow-y: auto; }
+    .overlay { align-items: flex-end; }
+    .modal-lg { width: 100% !important; }
+
+    /* Período A receber */
+    .btn-periodo { font-size: 10px; padding: 3px 5px; }
+  }
+
+  /* Desktop — esconde cards mobile */
+  @media (min-width: 769px) {
+    .boleto-cards { display: none; }
   }
 </style>
 </head>
@@ -360,6 +425,9 @@
   </div>
 
 </div>
+
+  <!-- Cards mobile -->
+  <div class="boleto-cards" id="boleto-cards"></div>
 
 <!-- Modal tratativa -->
 <div class="overlay" id="modal-trat">
@@ -513,6 +581,8 @@
     <div id="rel-conteudo"></div>
   </div>
 </div>
+
+<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 8.1</div>
 
 <div class="notify" id="notify"></div>
 
@@ -947,6 +1017,51 @@ function renderTabela() {
     html += pagos.map(gerarLinha).join('');
   }
   tbody.innerHTML = html;
+
+  // ── Cards mobile ──────────────────────────────────────────────
+  const renderCard = b => {
+    const isPago = b.status === 'pago';
+    const alerta = classeAlerta(b);
+    const ult = b.tratativas && b.tratativas.length > 0 ? b.tratativas[b.tratativas.length-1] : null;
+    const ultTxt = ult ? `${normalizarData(ult.dataHora)} ${ult.obs ? ult.obs.substring(0,40)+(ult.obs.length>40?'...':'') : ''}`.trim() : '';
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const toISO = v => { const d=normalizarData(v); if(!d||d==='—') return '9999'; const p=d.split('/'); return (p[2]||'2025')+'-'+p[1]+'-'+p[0]; };
+    const proxVenc = ult&&ult.proximo ? new Date(toISO(ult.proximo)) : null;
+    const proxStyle = (!isPago&&proxVenc&&proxVenc<hoje) ? 'color:var(--danger);font-weight:600;' : '';
+    const dataPagamento = isPago && ult ? normalizarData(ult.dataHora) : null;
+    const vencStr = isPago
+      ? `<span style="color:#128c42;">✓ ${dataPagamento||normalizarData(b.vencimento)}</span>`
+      : `<span style="${proxStyle}">${normalizarData(b.vencimento)}${tagAlerta(b)}</span>`;
+    const btns = isPago
+      ? `<button class="btn-acao" onclick="abrirTratativa('${b.id}')" style="opacity:0.5;font-size:12px;">Ver</button>`
+      : `<button class="btn-pago" onclick="marcarPagoRapido('${b.id}')">✓ Pago</button>
+         <button class="btn-acao" onclick="abrirTratativa('${b.id}')">Registrar</button>
+         <button class="btn-wa" onclick="copiarWhatsApp('${b.id}')">WA</button>`;
+    return `<div class="boleto-card ${isPago?'linha-paga':alerta}">
+      <div class="bc-header">
+        <div class="bc-nome">${b.nome}</div>
+        <div class="bc-valor">R$ ${normalizarValor(b.valor)}</div>
+      </div>
+      <div class="bc-meta">
+        <span class="bc-venda">Venda ${b.venda}${b.parcela?' · '+normalizarParcela(b.parcela):''}</span>
+        ${vencStr}
+        <span class="badge ${statusBadge[b.status]||'b-pendente'}">${statusLabel[b.status]||b.status}</span>
+        ${b.serasa==='sim'?'<span class="badge b-serasa-sim">Serasa</span>':''}
+      </div>
+      ${ult&&ult.proximo?`<div class="bc-meta"><span style="font-size:11px;color:var(--text3);">Próx.: </span><span style="font-size:11px;${proxStyle}">${normalizarData(ult.proximo)}</span></div>`:''}
+      <div class="bc-footer">
+        <div class="bc-acoes">${btns}</div>
+      </div>
+      ${ultTxt?`<div class="bc-ult">💬 ${ultTxt}</div>`:''}
+    </div>`;
+  };
+
+  let mobileHtml = naoPageos.map(renderCard).join('');
+  if (pagos.length > 0) {
+    mobileHtml += `<div class="separador-pago-mob">✓ Pagos (${pagos.length})</div>`;
+    mobileHtml += pagos.map(renderCard).join('');
+  }
+  document.getElementById('boleto-cards').innerHTML = mobileHtml;
 }
 
 function renderSummary() {
