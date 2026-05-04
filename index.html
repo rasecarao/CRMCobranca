@@ -211,6 +211,16 @@
   tr.linha-paga td { opacity: 0.45; }
   tr.linha-paga:hover td { opacity: 0.65; background: var(--bg); }
 
+  /* Linha expansível de juros */
+  .linha-juros { background: #f0faf4 !important; }
+  .linha-juros td { padding: 6px 12px 8px !important; border-bottom: 2px solid #c8ecd6 !important; }
+  .juros-grid { display: flex; gap: 24px; font-size: 12px; }
+  .juros-item { display: flex; flex-direction: column; gap: 2px; }
+  .juros-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text3); font-weight: 600; }
+  .juros-valor { font-weight: 700; color: var(--text); }
+  .juros-valor.positivo { color: var(--danger); }
+  .juros-valor.zero { color: #128c42; }
+
   /* Separador de pagos */
   .separador-pago td { background: var(--surface2) !important; font-size: 11px; color: var(--text3); text-align: center; padding: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); border-top: 2px solid var(--border2); }
 
@@ -582,7 +592,7 @@
   </div>
 </div>
 
-<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 8.1</div>
+<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 8.5</div>
 
 <div class="notify" id="notify"></div>
 
@@ -783,6 +793,10 @@ function parseBlocoFacil123(texto) {
         let nome = vendaMatch[1].trim();
         // Remove CPF/CNPJ prefixos numéricos (ex: "51.307.054 MARIA...")
         nome = nome.replace(/^\d[\d.\/\-]*\s+/, '').trim();
+        // Remove sufixos intermediários do Fácil123 (ex: "* Boleto Negativado", "* NEGATIVADO", "* Boleto Negativado]")
+        nome = nome.replace(/\s*\*\s*(boleto\s+negativado|negativado)[^\*]*/gi, '').trim();
+        // Remove colchetes ou outros caracteres residuais
+        nome = nome.replace(/[\[\]]/g, '').trim();
         // Capitaliza
         nome = nome.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 
@@ -800,7 +814,7 @@ function parseBlocoFacil123(texto) {
           }
         }
 
-        resultado.push({ nome, venda, parcela, valor, vencimento });
+        resultado.push({ nome, venda, parcela, valor, vencimento, dataPagamento: vencimento });
       } else {
         i++; // linha inesperada, avança
       }
@@ -809,8 +823,10 @@ function parseBlocoFacil123(texto) {
       const vendaMatch = linhas[i].match(/^(.+?)\s*\*\s*Venda\s+(\d+)(?:\s*\*\s*(\d+\/\d+))?/i);
       if (vendaMatch) {
         let nome = vendaMatch[1].trim().replace(/^\d[\d.\/\-]*\s+/, '').trim();
+        nome = nome.replace(/\s*\*\s*(boleto\s+negativado|negativado)[^\*]*/gi, '').trim();
+        nome = nome.replace(/[\[\]]/g, '').trim();
         nome = nome.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-        resultado.push({ nome, venda: vendaMatch[2], parcela: vendaMatch[3] || '', valor: '', vencimento: '' });
+        resultado.push({ nome, venda: vendaMatch[2], parcela: vendaMatch[3] || '', valor: '', vencimento: '', dataPagamento: '' });
       }
       i++;
     }
@@ -983,8 +999,41 @@ function renderTabela() {
     const isPago = b.status === 'pago';
     const alerta = classeAlerta(b);
     const btnPago = isPago
-      ? `<button class="btn-acao" onclick="abrirTratativa('${b.id}')" style="opacity:0.5;">Ver</button>`
+      ? `<button class="btn-acao" onclick="abrirTratativa('${b.id}')" style="opacity:0.5;font-size:12px;">Ver</button>`
       : `<button class="btn-pago" onclick="marcarPagoRapido('${b.id}')" title="Marcar como pago">✓ Pago</button> <button class="btn-acao" onclick="abrirTratativa('${b.id}')">Registrar</button> <button class="btn-wa" onclick="copiarWhatsApp('${b.id}')">WA</button>`;
+
+    // Linha expansível de juros para boletos pagos
+    let linhaJuros = '';
+    if (isPago && ult && ult.valorRecebido) {
+      // Converte qualquer formato de valor para float
+      // Suporta: "1306,67" | "1.306,67" | "1306.67" | 1306.67 (número)
+      const toF = v => {
+        const s = String(v).trim();
+        // Se tem vírgula como decimal (formato BR): remove pontos de milhar
+        if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+        // Se só tem ponto (formato EN ou número direto): usa direto
+        return parseFloat(s.replace(/,/g, '')) || 0;
+      };
+      const principal = toF(b.valor);
+      const recebido  = toF(ult.valorRecebido);
+      const juros     = recebido - principal;
+      const fmtBR = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+      const jurosClass = juros > 0.01 ? 'positivo' : 'zero';
+      const jurosStr   = juros > 0.01 ? `+${fmtBR(juros)}` : 'Sem juros';
+      linhaJuros = `<tr class="linha-juros" id="juros-${b.id}" style="display:none;">
+        <td colspan="10">
+          <div class="juros-grid">
+            <div class="juros-item"><span class="juros-label">Principal</span><span class="juros-valor">${fmtBR(principal)}</span></div>
+            <div class="juros-item"><span class="juros-label">Recebido</span><span class="juros-valor">${fmtBR(recebido)}</span></div>
+            <div class="juros-item"><span class="juros-label">Juros / Acréscimo</span><span class="juros-valor ${jurosClass}">${jurosStr}</span></div>
+          </div>
+        </td>
+      </tr>`;
+    }
+
+    const seta = (isPago && ult && ult.valorRecebido)
+      ? `<span id="seta-${b.id}" style="cursor:pointer;font-size:10px;color:var(--text3);margin-right:4px;" onclick="toggleJuros('${b.id}')">▶</span>`
+      : '';
     const dataPagamento = isPago && ult ? normalizarData(ult.dataHora) : null;
     const celVenc = isPago
       ? `<span style="color:#128c42;font-weight:500;" title="Venc.: ${normalizarData(b.vencimento)}">✓ ${dataPagamento || normalizarData(b.vencimento)}</span>`
@@ -998,7 +1047,7 @@ function renderTabela() {
     const proxVenc = ult && ult.proximo ? new Date(toISO(ult.proximo)) : null;
     const proxStyle = (!isPago && proxVenc && proxVenc < hoje) ? 'color:var(--danger);font-weight:600;' : 'color:var(--text2);';
     return `<tr class="${isPago ? 'linha-paga' : alerta}">
-      <td class="col-nome nome-cell" title="${b.nome}">${b.nome}</td>
+      <td class="col-nome nome-cell" title="${b.nome}">${seta}${b.nome}</td>
       <td class="col-venda">${b.venda}</td>
       <td class="col-parc">${normalizarParcela(b.parcela)}</td>
       <td class="col-valor valor-cell">R$ ${normalizarValor(b.valor)}</td>
@@ -1008,7 +1057,7 @@ function renderTabela() {
       <td class="col-prox" style="font-size:12px;${proxStyle}">${proxContato}</td>
       <td class="col-ult ult-cell" title="${ult ? ult.obs : ''}">${ultTxt}</td>
       <td class="col-acao">${btnPago}</td>
-    </tr>`;
+    </tr>${linhaJuros}`;
   };
 
   let html = naoPageos.map(gerarLinha).join('');
@@ -1415,7 +1464,7 @@ function previewBaixa() {
   let html = '';
   if (encontrados.length > 0) {
     html += `<div style="font-size:12px;font-weight:600;color:#128c42;margin-bottom:6px;">✓ ${encontrados.length} boleto(s) serão marcados como pago:</div>`;
-    html += encontrados.map(m => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;"><span>${m.boleto.nome} · Venda ${m.boleto.venda}${m.parsed.parcela ? ' · '+m.parsed.parcela : ''}</span><span style="color:#128c42;font-weight:600;">R$ ${normalizarValor(m.parsed.valor||m.boleto.valor)}</span></div>`).join('');
+    html += encontrados.map(m => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;"><span>${m.boleto.nome} · Venda ${m.boleto.venda}${m.parsed.parcela ? ' · '+m.parsed.parcela : ''} <span style="color:var(--text3);font-size:11px;">· pago ${m.parsed.dataPagamento||''}</span></span><span style="color:#128c42;font-weight:600;">R$ ${normalizarValor(m.parsed.valor||m.boleto.valor)}</span></div>`).join('');
   }
   if (naoEncontrados.length > 0) {
     html += `<div style="font-size:12px;font-weight:600;color:var(--danger);margin-top:10px;margin-bottom:6px;">⚠️ ${naoEncontrados.length} não encontrado(s) em aberto:</div>`;
@@ -1438,6 +1487,15 @@ async function confirmarBaixa() {
   const agora = new Date().toLocaleString('pt-BR');
   let ok = 0;
   for (const m of aConfirmar) {
+    // Usa a data do bloco do Fácil123 como data do pagamento
+    // Se não vier data no bloco, usa a data atual
+    const dataHora = m.parsed.dataPagamento
+      ? (() => {
+          const p = m.parsed.dataPagamento.split('/');
+          // Converte DD/MM/YYYY para DD/MM/YYYY, 00:00:00 (meia-noite do dia)
+          return p[0] + '/' + p[1] + '/' + p[2] + ', 00:00:00';
+        })()
+      : agora;
     const payload = {
       action: 'addTratativa',
       boletoId: m.boleto.id,
@@ -1448,7 +1506,8 @@ async function confirmarBaixa() {
       proximo: '',
       resp: '',
       serasa: m.boleto.serasa || 'nao',
-      dataHora: agora
+      dataHora: dataHora,
+      valorRecebido: m.parsed.valor || ''
     };
     const r = await gsCall(payload);
     if (r) ok++;
@@ -1704,6 +1763,15 @@ function renderRelatorio() {
         </tbody>
       </table>
     </div>`;
+}
+
+function toggleJuros(id) {
+  const linha = document.getElementById('juros-' + id);
+  const seta  = document.getElementById('seta-' + id);
+  if (!linha) return;
+  const aberto = linha.style.display !== 'none';
+  linha.style.display = aberto ? 'none' : 'table-row';
+  if (seta) seta.textContent = aberto ? '▶' : '▼';
 }
 
 // Fechar modal clicando fora
