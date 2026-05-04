@@ -592,7 +592,7 @@
   </div>
 </div>
 
-<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 8.5</div>
+<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 8.7</div>
 
 <div class="notify" id="notify"></div>
 
@@ -791,10 +791,11 @@ function parseBlocoFacil123(texto) {
       const vendaMatch = linhas[i].match(/^(.+?)\s*\*\s*Venda\s+(\d+)(?:\s*\*\s*(\d+\/\d+))?/i);
       if (vendaMatch) {
         let nome = vendaMatch[1].trim();
-        // Remove CPF/CNPJ prefixos numéricos (ex: "51.307.054 MARIA...")
-        nome = nome.replace(/^\d[\d.\/\-]*\s+/, '').trim();
-        // Remove sufixos intermediários do Fácil123 (ex: "* Boleto Negativado", "* NEGATIVADO", "* Boleto Negativado]")
-        nome = nome.replace(/\s*\*\s*(boleto\s+negativado|negativado)[^\*]*/gi, '').trim();
+        // Remove CPF/CNPJ prefixos numéricos (ex: "48 296 931 NOME..." ou "51.307.054/0001 NOME")
+        nome = nome.replace(/^\d[\d.\/ \-]*\s+/, '').trim();
+        // Remove TUDO após qualquer * — sufixos como "* Cliente Negativado",
+        // "* Boleto Negativado", "* Cliente Do Golpe", "* César - Aparentemente..."
+        nome = nome.replace(/\s*\*.*$/, '').trim();
         // Remove colchetes ou outros caracteres residuais
         nome = nome.replace(/[\[\]]/g, '').trim();
         // Capitaliza
@@ -809,7 +810,10 @@ function parseBlocoFacil123(texto) {
           // Valor: pode ser "1.001,50" ou "1001,50" — pega linha que parece número
           const valorMatch = linhas[i].match(/^[\d.,]+$/);
           if (valorMatch) {
-            valor = linhas[i].replace(/\./g, '').replace(',', ','); // mantém formato BR
+            // Remove ponto de milhar, mantém vírgula decimal e garante 2 casas
+            const vRaw = linhas[i].replace(/\./g, '').replace(',', '.');
+            const vNum = parseFloat(vRaw);
+            valor = isNaN(vNum) ? linhas[i] : vNum.toFixed(2).replace('.', ',');
             i++;
           }
         }
@@ -822,8 +826,8 @@ function parseBlocoFacil123(texto) {
       // Tenta parsear linha avulsa no formato antigo (sem linha de data acima)
       const vendaMatch = linhas[i].match(/^(.+?)\s*\*\s*Venda\s+(\d+)(?:\s*\*\s*(\d+\/\d+))?/i);
       if (vendaMatch) {
-        let nome = vendaMatch[1].trim().replace(/^\d[\d.\/\-]*\s+/, '').trim();
-        nome = nome.replace(/\s*\*\s*(boleto\s+negativado|negativado)[^\*]*/gi, '').trim();
+        let nome = vendaMatch[1].trim().replace(/^\d[\d.\/ \-]*\s+/, '').trim();
+        nome = nome.replace(/\s*\*.*$/, '').trim();
         nome = nome.replace(/[\[\]]/g, '').trim();
         nome = nome.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
         resultado.push({ nome, venda: vendaMatch[2], parcela: vendaMatch[3] || '', valor: '', vencimento: '', dataPagamento: '' });
