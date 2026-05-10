@@ -310,6 +310,40 @@
   @media (min-width: 769px) {
     .boleto-cards { display: none; }
   }
+
+  /* ── ACORDOS ─────────────────────────────────────────────── */
+  .modal-acordo { width: 860px; }
+  .acordo-step  { display:none; }
+  .acordo-step.active { display:block; }
+  .step-bar { display:flex; gap:0; margin-bottom:1.5rem; }
+  .step-item { flex:1; text-align:center; font-size:11px; font-weight:600; padding:8px 4px 6px;
+    border-bottom:3px solid var(--border); color:var(--text3); cursor:pointer; }
+  .step-item.active { border-bottom-color:var(--accent); color:var(--accent); }
+  .step-item.done   { border-bottom-color:#25d366; color:#128c42; }
+  .boleto-sel-list  { max-height:240px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm); }
+  .boleto-sel-row   { display:flex; align-items:center; gap:10px; padding:8px 12px;
+    border-bottom:1px solid var(--border); font-size:13px; cursor:pointer; }
+  .boleto-sel-row:last-child { border-bottom:none; }
+  .boleto-sel-row:hover { background:var(--surface2); }
+  .boleto-sel-row.selected { background:var(--accent-bg); }
+  .boleto-sel-row input[type=checkbox] { accent-color:var(--accent); width:15px; height:15px; flex-shrink:0; }
+  .acordo-calc-box { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius);
+    padding:14px 16px; margin-bottom:12px; }
+  .calc-row { display:flex; justify-content:space-between; align-items:center;
+    font-size:13px; padding:5px 0; border-bottom:1px dashed var(--border); }
+  .calc-row:last-child { border-bottom:none; font-size:15px; font-weight:700; color:var(--accent); margin-top:4px; padding-top:8px; }
+  .calc-label { color:var(--text2); }
+  .calc-val   { font-weight:600; }
+  .forma-btn  { display:flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--border2);
+    border-radius:var(--radius-sm); cursor:pointer; font-size:13px; background:var(--surface); transition:all .15s; }
+  .forma-btn:hover,.forma-btn.active { background:var(--accent-bg); border-color:var(--accent); color:var(--accent); font-weight:500; }
+  .forma-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+  .preview-acordo { font-size:12px; line-height:1.8; color:var(--text); font-family:'Courier New',monospace;
+    border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem;
+    background:#fafaf8; max-height:380px; overflow-y:auto; white-space:pre-wrap; }
+  .b-acordo            { background:#f0eefe; color:#3c2e8a; }
+  .b-acordo-realizado  { background:var(--accent-bg); color:var(--accent-text); }
+  @media(max-width:768px){ .modal-acordo{width:100%!important;} .forma-grid{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -320,6 +354,7 @@
     <span id="sync-status" style="font-size:12px;color:var(--text3);"></span>
     <button class="btn" onclick="abrirResumoPorCliente()" title="Ver agrupado por cliente">👤 Por cliente</button>
     <button class="btn" onclick="abrirRelatorio()" title="Relatório de inadimplência">📊 Relatório</button>
+    <button class="btn" onclick="abrirAcordos()" style="border-color:#7c3aed;color:#5b21b6;" title="Formalizar acordo com cliente">🤝 Acordos</button>
     <button class="btn" onclick="abrirBaixaPagamentos()" style="border-color:#25d366;color:#128c42;">✓ Baixar pagamentos</button>
     <button class="btn btn-primary" onclick="abrirAddBoleto()">+ Adicionar boletos</button>
   </div>
@@ -377,6 +412,11 @@
       <div class="stat-value" id="s-prom">—</div>
       <div class="stat-sub">aguardando</div>
     </div>
+    <div class="stat-card" style="border-top:3px solid #7c3aed;">
+      <div class="stat-label" style="color:#5b21b6;">🤝 Acordos</div>
+      <div class="stat-value" id="s-acordo" style="color:#5b21b6;">—</div>
+      <div class="stat-sub" id="s-acordo-valor" style="color:#5b21b6;">realizados</div>
+    </div>
   </div>
 
   <div class="toolbar">
@@ -415,6 +455,7 @@
               <option value="contato">Contato</option>
               <option value="promessa">Promessa</option>
               <option value="escalado">Escalado</option>
+              <option value="acordo_realizado">Acordo ✓</option>
               <option value="pago">Pago</option>
             </select>
           </th>
@@ -462,6 +503,7 @@
             <option value="contato">Contato feito</option>
             <option value="promessa">Promessa de pagamento</option>
             <option value="escalado">Escalado</option>
+            <option value="acordo_realizado">Acordo realizado ✓</option>
             <option value="pago">Pago ✓</option>
           </select>
         </div>
@@ -592,7 +634,7 @@
   </div>
 </div>
 
-<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 8.7</div>
+<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 9.6</div>
 
 <div class="notify" id="notify"></div>
 
@@ -896,8 +938,8 @@ function normalizarData(val) {
   return s;
 }
 
-const statusLabel = { pendente:'Pendente', contato:'Contato feito', promessa:'Promessa', escalado:'Escalado', pago:'Pago' };
-const statusBadge = { pendente:'b-pendente', contato:'b-contato', promessa:'b-promessa', escalado:'b-escalado', pago:'b-pago' };
+const statusLabel = { pendente:'Pendente', contato:'Contato feito', promessa:'Promessa', escalado:'Escalado', pago:'Pago', acordo_realizado:'Acordo ✓' };
+const statusBadge = { pendente:'b-pendente', contato:'b-contato', promessa:'b-promessa', escalado:'b-escalado', pago:'b-pago', acordo_realizado:'b-acordo-realizado' };
 
 function setOrdem(col) {
   if (ordemAtual.col === col) {
@@ -993,7 +1035,8 @@ function renderTabela() {
     return;
   }
 
-  const naoPageos = lista.filter(b => b.status !== 'pago');
+  const naoPageos = lista.filter(b => b.status !== 'pago' && b.status !== 'acordo_realizado');
+  const acordosReal = lista.filter(b => b.status === 'acordo_realizado');
   const pagos     = lista.filter(b => b.status === 'pago');
 
   const gerarLinha = b => {
@@ -1065,6 +1108,10 @@ function renderTabela() {
   };
 
   let html = naoPageos.map(gerarLinha).join('');
+  if (acordosReal.length > 0) {
+    html += `<tr class="separador-pago" style="border-color:#7c3aed;"><td colspan="10" style="color:#5b21b6;">🤝 Acordos realizados (${acordosReal.length})</td></tr>`;
+    html += acordosReal.map(gerarLinha).join('');
+  }
   if (pagos.length > 0) {
     html += `<tr class="separador-pago"><td colspan="10">✓ Pagos (${pagos.length})</td></tr>`;
     html += pagos.map(gerarLinha).join('');
@@ -1110,6 +1157,10 @@ function renderTabela() {
   };
 
   let mobileHtml = naoPageos.map(renderCard).join('');
+  if (acordosReal.length > 0) {
+    mobileHtml += `<div class="separador-pago-mob" style="color:#5b21b6;">🤝 Acordos realizados (${acordosReal.length})</div>`;
+    mobileHtml += acordosReal.map(renderCard).join('');
+  }
   if (pagos.length > 0) {
     mobileHtml += `<div class="separador-pago-mob">✓ Pagos (${pagos.length})</div>`;
     mobileHtml += pagos.map(renderCard).join('');
@@ -1127,21 +1178,26 @@ function renderSummary() {
     const p = d.split('/'); return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
   };
 
-  const ativos   = boletos.filter(b => b.status !== 'pago');
-  const pagos    = boletos.filter(b => b.status === 'pago');
-  const vencidos = ativos.filter(b => { const d=toDate(b); return d && d < hoje; });
+  // Exclui pago E acordo_realizado dos "ativos" (não são inadimplentes)
+  const baixados  = ['pago', 'acordo_realizado'];
+  const ativos    = boletos.filter(b => !baixados.includes(b.status));
+  const pagos     = boletos.filter(b => b.status === 'pago');
+  const acordos   = boletos.filter(b => b.status === 'acordo_realizado');
+  const vencidos  = ativos.filter(b => { const d=toDate(b); return d && d < hoje; });
 
   const fmt = (n, v) => { const el = document.getElementById(n); if(el) el.textContent = v; };
   fmt('s-venc',       vencidos.length);
   fmt('s-venc-valor', fmtBR(vencidos.reduce((s,b)=>s+toFloat(b),0)));
 
-  // % inadimplência = valor vencido / (valor vencido + valor a receber)
-  const totalGeral = boletos.filter(b => b.status !== 'pago').reduce((s,b) => s+toFloat(b), 0);
+  // % inadimplência considera só os ativos reais (sem acordos realizados)
+  const totalGeral   = ativos.reduce((s,b) => s+toFloat(b), 0);
   const valorVencido = vencidos.reduce((s,b) => s+toFloat(b), 0);
   const pct = totalGeral > 0 ? (valorVencido / totalGeral * 100).toFixed(1) : 0;
   fmt('s-venc-pct', pct + '% de inadimplência');
   fmt('s-pago',       pagos.length);
   fmt('s-pago-valor', fmtBR(pagos.reduce((s,b)=>s+toFloat(b),0)) + ' baixados');
+  fmt('s-acordo',       acordos.length);
+  fmt('s-acordo-valor', fmtBR(acordos.reduce((s,b)=>s+toFloat(b),0)));
   fmt('s-pend',       boletos.filter(b=>b.status==='pendente').length);
   fmt('s-prom',       boletos.filter(b=>b.status==='promessa').length);
 
@@ -1212,7 +1268,7 @@ function calcReceber() {
   }
 
   const lista = boletos.filter(b => {
-    if (b.status === 'pago') return false;
+    if (b.status === 'pago' || b.status === 'acordo_realizado') return false;
     const d = toDate(b);
     return d && d >= de && d <= ate;
   });
@@ -1524,7 +1580,7 @@ async function confirmarBaixa() {
 
 // ─── ALERTAS DE VENCIMENTO (aplicados na linha da tabela) ────────────────────
 function classeAlerta(b) {
-  if (b.status === 'pago') return '';
+  if (b.status === 'pago' || b.status === 'acordo_realizado') return '';
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const venc = normalizarData(b.vencimento);
   if (!venc || venc === '—') return '';
@@ -1782,6 +1838,975 @@ function toggleJuros(id) {
 document.querySelectorAll('.overlay').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
 });
+// ─── ACORDOS ──────────────────────────────────────────────────────────────────
+let acBoletosSelIds = new Set();
+let acFormaAtiva = '';
+
+async function buscarProxNumAcordo() {
+  // Conta acordos já realizados nos boletos e gera número sequencial
+  const ano  = new Date().getFullYear();
+  const qtd  = boletos.filter(b =>
+    b.status === 'acordo_realizado' || b.status === 'acordo'
+  ).length;
+  // Busca tratativas com "ACORDO REALIZADO" para contar mais precisamente
+  let count = 0;
+  boletos.forEach(b => {
+    if (!b.tratativas) return;
+    b.tratativas.forEach(t => {
+      if (t.obs && t.obs.includes('Acordo nº ')) count++;
+    });
+  });
+  const seq = Math.max(qtd, count) + 1;
+  return `${ano}/${String(seq).padStart(3,'0')}`;
+}
+
+function exibirNumAcordo(num) {
+  window._acordoNumero = num;
+  const badge = document.getElementById('ac-num-badge');
+  if (badge) { badge.textContent = `Nº ${num}`; }
+}
+
+async function abrirAcordos() {
+  // Inicializa listener na primeira abertura (DOM já existe aqui)
+  if (!_acordoModalInited) {
+    const m = document.getElementById('modal-acordo');
+    if (m) { m.addEventListener('click', function(e){ if (e.target===this) this.classList.remove('open'); }); }
+    _acordoModalInited = true;
+  }
+  acBoletosSelIds = new Set();
+  acFormaAtiva = '';
+  const hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('ac-data-calc').value = hoje;
+  document.getElementById('ac-filtro-cliente').value = '';
+  document.getElementById('ac-desconto').value = '0';
+  document.getElementById('ac-nome').value = '';
+  document.getElementById('ac-cpf').value = '';
+  document.getElementById('ac-endereco').value = '';
+  document.getElementById('ac-cidade').value = '';
+  document.getElementById('ac-fone').value = '';
+  document.getElementById('ac-email').value = '';
+  document.getElementById('ac-representante').value = '';
+  document.getElementById('ac-cond-pag').value = '';
+  window._parcelas = [];
+  window._acordoCalc = null;
+  const painel = document.getElementById('ac-boleto-painel');
+  if (painel) painel.style.display = 'none';
+  document.getElementById('ac-parcelas-preview').innerHTML = '';
+  const v1 = document.getElementById('ac-venc-1parc');
+  if (v1) v1.value = '';
+  document.querySelectorAll('.forma-btn').forEach(b => b.classList.remove('active'));
+  renderBoletosAcordo();
+  setAcStep(1);
+  document.getElementById('modal-acordo').classList.add('open');
+  // Gera e exibe o número APÓS o modal estar visível
+  buscarProxNumAcordo().then(num => exibirNumAcordo(num));
+}
+
+function setAcStep(n) {
+  const labels = ['','Selecione os boletos em aberto','Calcule o valor com encargos',
+    'Dados de identificação do devedor','Forma de pagamento do acordo','Revisar e confirmar o acordo'];
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('ac-step-'+i)?.classList.toggle('active', i===n);
+    const lbl = document.getElementById('step-lbl-'+i);
+    if (lbl) { lbl.classList.toggle('active',i===n); lbl.classList.toggle('done',i<n); }
+  }
+  document.getElementById('ac-sub').textContent = labels[n] || '';
+}
+
+function acStep(n) {
+  if (n===2 && acBoletosSelIds.size===0) { notify('Selecione pelo menos um boleto.'); return; }
+  if (n===4 && !document.getElementById('ac-nome').value.trim()) { notify('Preencha o nome do cliente.'); return; }
+  if (n===5) {
+    if (!acFormaAtiva) { notify('Selecione a forma de pagamento.'); return; }
+    gerarPreviewAcordo();
+  }
+  if (n===2) calcAcordo();
+  setAcStep(n);
+}
+
+function renderBoletosAcordo() {
+  const filtro = (document.getElementById('ac-filtro-cliente').value||'').toLowerCase();
+  const lista = boletos.filter(b =>
+    b.status!=='pago' && b.status!=='acordo_realizado' &&
+    (!filtro || b.nome.toLowerCase().includes(filtro))
+  ).sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+
+  const el = document.getElementById('ac-boleto-lista');
+  if (!lista.length) {
+    el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text2);font-size:13px;">Nenhum boleto em aberto encontrado.</div>';
+    atualizarResumoSelAcordo(); return;
+  }
+  el.innerHTML = lista.map(b => {
+    const sel = acBoletosSelIds.has(b.id);
+    const vStr = normalizarData(b.vencimento);
+    const vVal = normalizarValor(b.valor);
+    const vPrc = normalizarParcela(b.parcela);
+    const atrasado = classeAlerta(b) === 'alerta-atrasado';
+    const corVenc = atrasado ? 'color:var(--danger);font-weight:600;' : '';
+    return `<div class="boleto-sel-row ${sel?'selected':''}" onclick="toggleBoletoAcordo('${b.id}')">
+      <input type="checkbox" ${sel?'checked':''} readonly />
+      <div style="flex:1;">
+        <div style="font-weight:500;">${b.nome}</div>
+        <div style="font-size:11px;color:var(--text2);">Venda ${b.venda}${b.parcela&&vPrc!=='—'?' · '+vPrc:''} · Venc. <span style="${corVenc}">${vStr}</span>${atrasado?tagAlerta(b):''}</div>
+      </div>
+      <div style="font-weight:700;">R$ ${vVal}</div>
+    </div>`;
+  }).join('');
+  atualizarResumoSelAcordo();
+}
+
+function toggleBoletoAcordo(id) {
+  acBoletosSelIds.has(id) ? acBoletosSelIds.delete(id) : acBoletosSelIds.add(id);
+  renderBoletosAcordo();
+}
+
+function atualizarResumoSelAcordo() {
+  const sel = boletos.filter(b => acBoletosSelIds.has(b.id));
+  const total = sel.reduce((s,b) => s + acToF(b.valor), 0);
+  const el = document.getElementById('ac-sel-resumo');
+  if (!sel.length) { el.textContent='Nenhum boleto selecionado.'; return; }
+  const nomes = [...new Set(sel.map(b=>b.nome))];
+  if (nomes.length===1) {
+    const nomeInput = document.getElementById('ac-nome');
+    if (nomeInput && !nomeInput.value) nomeInput.value = nomes[0];
+  }
+  el.innerHTML = `<strong>${sel.length}</strong> boleto(s) selecionado(s) · Principal: <strong>R$ ${acFmt(total)}</strong>`;
+}
+
+function acToF(v) {
+  const s = String(v||'0').trim();
+  if (s.includes(',')) return parseFloat(s.replace(/\./g,'').replace(',','.'))||0;
+  return parseFloat(s)||0;
+}
+function acFmt(v) { return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function calcAcordo() {
+  const sel = boletos.filter(b => acBoletosSelIds.has(b.id));
+  if (!sel.length) return;
+  const dataBase  = document.getElementById('ac-data-calc').value;
+  const pctMulta  = parseFloat(document.getElementById('ac-multa').value)/100||0.02;
+  const pctJurDia = parseFloat(document.getElementById('ac-juros-dia').value)/100||0.00033;
+  const desconto  = parseFloat(document.getElementById('ac-desconto').value)||0;
+  const hoje = dataBase ? new Date(dataBase+'T00:00:00') : new Date();
+  let totP=0,totM=0,totJ=0;
+
+  const linhas = sel.map(b => {
+    const principal = acToF(b.valor);
+    const vStr = normalizarData(b.vencimento);
+    let dias = 0;
+    if (vStr && vStr!=='—') {
+      const p=vStr.split('/');
+      const dv=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));
+      dias = Math.max(0,Math.round((hoje-dv)/86400000));
+    }
+    const multa = dias>0 ? principal*pctMulta : 0;
+    const juros = dias>0 ? principal*pctJurDia*dias : 0;
+    totP+=principal; totM+=multa; totJ+=juros;
+    return `<div class="calc-row">
+      <span class="calc-label">${b.nome} · Venda ${b.venda} · ${dias}d atraso</span>
+      <span class="calc-val">R$ ${acFmt(principal+multa+juros)}</span></div>`;
+  }).join('');
+
+  const totalFinal = totP+totM+totJ-desconto;
+  document.getElementById('ac-calc-box').innerHTML = `${linhas}
+    <div class="calc-row" style="margin-top:6px;"><span class="calc-label">Subtotal principal</span><span class="calc-val">R$ ${acFmt(totP)}</span></div>
+    <div class="calc-row"><span class="calc-label">Multa (${(pctMulta*100).toFixed(2)}%)</span><span class="calc-val" style="color:var(--danger);">+ R$ ${acFmt(totM)}</span></div>
+    <div class="calc-row"><span class="calc-label">Juros (${(pctJurDia*100).toFixed(3)}% a.d.)</span><span class="calc-val" style="color:var(--danger);">+ R$ ${acFmt(totJ)}</span></div>
+    ${desconto>0?`<div class="calc-row"><span class="calc-label">Desconto concedido</span><span class="calc-val" style="color:#128c42;">- R$ ${acFmt(desconto)}</span></div>`:''}
+    <div class="calc-row"><span class="calc-label">💰 TOTAL DO ACORDO</span><span class="calc-val" style="font-size:17px;">R$ ${acFmt(totalFinal)}</span></div>`;
+  window._acordoCalc = {totP,totM,totJ,desconto,totalFinal,dataBase:hoje.toLocaleDateString('pt-BR'),sel};
+}
+
+function setFormaAcordo(forma) {
+  acFormaAtiva = forma;
+  document.querySelectorAll('.forma-btn').forEach(b=>b.classList.remove('active'));
+  const mapa = {
+    'Pagamento à vista via Pix':'f-pix','Boleto bancário parcelado':'f-boleto',
+    'Nota promissória':'f-promissoria','Cheque pré-datado':'f-cheque',
+    'Depósito/transferência bancária':'f-deposito','A combinar':'f-outro'
+  };
+  if (mapa[forma]) document.getElementById(mapa[forma])?.classList.add('active');
+
+  const painel = document.getElementById('ac-boleto-painel');
+  const titulo = document.getElementById('ac-painel-titulo');
+  const mostraParcel = forma === 'Boleto bancário parcelado' || forma === 'Nota promissória';
+
+  if (painel) {
+    painel.style.display = mostraParcel ? 'block' : 'none';
+    if (titulo) titulo.textContent = forma === 'Nota promissória'
+      ? 'Parcelamento das promissórias'
+      : 'Parcelamento do boleto';
+    if (mostraParcel) {
+      const v1 = document.getElementById('ac-venc-1parc');
+      if (v1 && !v1.value) {
+        const d = new Date(); d.setDate(d.getDate()+30);
+        v1.value = d.toISOString().split('T')[0];
+      }
+      calcParcelas();
+    }
+  }
+}
+
+function calcParcelas() {
+  const c = window._acordoCalc||{};
+  const total = c.totalFinal || 0;
+  if (!total) return;
+
+  const n        = parseInt(document.getElementById('ac-num-parcelas').value)||1;
+  const venc1str = document.getElementById('ac-venc-1parc').value;
+  const tipo     = document.getElementById('ac-intervalo-tipo')?.value || 'mensal';
+  const diasInp  = document.getElementById('ac-intervalo-dias');
+
+  if (diasInp) diasInp.style.display = tipo === 'dias' ? 'block' : 'none';
+  if (!venc1str) return;
+
+  let intervDias;
+  if      (tipo === 'mensal')    intervDias = 30;
+  else if (tipo === 'quinzenal') intervDias = 15;
+  else if (tipo === 'semanal')   intervDias = 7;
+  else intervDias = parseInt(diasInp?.value) || 30;
+
+  const valorParcela = total / n;
+  const linhas = [];
+  window._parcelas = [];
+
+  for (let i = 0; i < n; i++) {
+    const d = new Date(venc1str+'T00:00:00');
+    d.setDate(d.getDate() + intervDias * i);
+    const vencFmt = d.toLocaleDateString('pt-BR');
+    linhas.push(`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--border);font-size:12px;">
+      <span style="color:var(--text2);">${i+1}ª parcela — venc. ${vencFmt}</span>
+      <span style="font-weight:600;">R$ ${acFmt(valorParcela)}</span>
+    </div>`);
+    window._parcelas.push({ num: i+1, vencimento: vencFmt, valor: acFmt(valorParcela), intervDias });
+  }
+  linhas.push(`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;font-weight:700;color:var(--accent);margin-top:2px;">
+    <span>Total (${n}x de R$ ${acFmt(valorParcela)})</span><span>R$ ${acFmt(total)}</span>
+  </div>`);
+
+  const tipoLabel = tipo==='mensal'?'mensal':tipo==='quinzenal'?'quinzenal':tipo==='semanal'?'semanal':`a cada ${intervDias} dias`;
+  const totEl = document.getElementById('ac-parcelas-total');
+  if (totEl) totEl.textContent = `Intervalo: ${tipoLabel}`;
+  document.getElementById('ac-parcelas-preview').innerHTML = linhas.join('');
+}
+
+function gerarPreviewAcordo() {
+  const c = window._acordoCalc||{};
+  const nome  = document.getElementById('ac-nome').value.trim()||'[NOME]';
+  const cpf   = document.getElementById('ac-cpf').value.trim()||'[CPF/CNPJ]';
+  const end   = document.getElementById('ac-endereco').value.trim()||'[ENDEREÇO]';
+  const cid   = document.getElementById('ac-cidade').value.trim()||'[CIDADE/UF]';
+  const rep   = document.getElementById('ac-representante').value.trim();
+  const obs   = document.getElementById('ac-cond-pag').value.trim();
+  const data  = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const sel   = c.sel||boletos.filter(b=>acBoletosSelIds.has(b.id));
+
+  // Boletos negociados com números dos pedidos
+  const bols = sel.map((b,i)=>{
+    const vStr=normalizarData(b.vencimento);
+    const vVal=normalizarValor(b.valor);
+    const vPrc=normalizarParcela(b.parcela);
+    return `   ${i+1}. Pedido nº ${b.venda}${b.parcela&&vPrc!=='—'?' (Parc. '+vPrc+')':''} — Venc. original: ${vStr} — R$ ${vVal}`;
+  }).join('\n');
+
+  // Forma de pagamento + parcelamento se boleto
+  const isBoleto = acFormaAtiva === 'Boleto bancário parcelado';
+  let blocoForma = `   ${acFormaAtiva}`;
+  if (isBoleto && window._parcelas && window._parcelas.length) {
+    const n = window._parcelas.length;
+    const linhasParcelas = window._parcelas.map(p =>
+      `   Parcela ${p.num}/${n} — R$ ${p.valor} — Vencimento: ${p.vencimento}`
+    ).join('\n');
+    blocoForma = `   Boleto bancário — ${n}x de R$ ${window._parcelas[0].valor}\n${linhasParcelas}`;
+  }
+  if (obs) blocoForma += `\n\n   Obs.: ${obs}`;
+
+  const numAcordo = window._acordoNumero || `${new Date().getFullYear()}/???`;
+
+  const texto=`INSTRUMENTO PARTICULAR DE CONFISSÃO DE DÍVIDA,
+ACORDO DE PAGAMENTO E OUTRAS AVENÇAS
+Número do Acordo: ${numAcordo}
+
+Pelo presente instrumento particular, as partes abaixo qualificadas
+têm entre si justo e contratado o presente acordo, que se regerá
+pelas cláusulas e condições a seguir estabelecidas.
+
+Trindade/GO, ${data}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE CREDORA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Razão Social : PRODUTOS ALIMENTÍCIOS EXPLOSÃO LTDA
+   CNPJ         : 01.121.126/0001-87
+   Endereço     : Av. Leão XIII, n.º 623, Setor Cristo Redentor
+                  Trindade – GO
+   E-mail       : administracao@explosaoalimentos.com.br
+   doravante denominada simplesmente CREDORA.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTE DEVEDORA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Nome/Razão Social : ${nome}${rep?'\n   Representante Legal: '+rep:''}
+   CPF/CNPJ          : ${cpf}
+   Endereço          : ${end}
+   Cidade/UF         : ${cid}
+   doravante denominado(a) simplesmente DEVEDOR(A).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA 1ª — DO OBJETO E RECONHECIMENTO DA DÍVIDA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+O(A) DEVEDOR(A), de forma livre, espontânea e sem qualquer
+coação, RECONHECE e CONFESSA dever à CREDORA os valores
+decorrentes dos seguintes títulos em aberto:
+
+${bols}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA 2ª — DO VALOR CONSOLIDADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Memória de cálculo (data-base: ${c.dataBase||data}):
+
+   Valor principal dos títulos :  R$ ${acFmt(c.totP||0)}
+   Multa contratual (2%)       :  R$ ${acFmt(c.totM||0)}
+   Juros de mora (0,033% a.d.) :  R$ ${acFmt(c.totJ||0)}${c.desconto>0?'\n   Desconto concedido          : -R$ '+acFmt(c.desconto):''}
+   ─────────────────────────────────────────────────────
+   VALOR TOTAL DO ACORDO       :  R$ ${acFmt(c.totalFinal||0)}
+   ══════════════════════════════════════════════════════
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA 3ª — DA FORMA E CONDIÇÕES DE PAGAMENTO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${blocoForma}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA 4ª — DA MORA E PENALIDADES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+O não pagamento de qualquer valor na data avençada sujeitará
+o(a) DEVEDOR(A) ao pagamento de:
+   a) Multa moratória de 2% (dois por cento) sobre o saldo devedor;
+   b) Juros de mora de 0,033% ao dia (equivalente a 1% ao mês);
+   c) Correção monetária pelo IGPM/FGV, ou índice que o substitua;
+   d) Honorários advocatícios de 10% sobre o valor em cobrança,
+      em caso de necessidade de execução judicial ou extrajudicial.
+
+O inadimplemento de qualquer parcela implicará o vencimento
+antecipado de todas as demais, tornando exigível a totalidade
+do saldo devedor remanescente de imediato.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA 5ª — DO TÍTULO EXECUTIVO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+O presente instrumento, assinado pelo(a) DEVEDOR(A) e por duas
+testemunhas, constitui TÍTULO EXECUTIVO EXTRAJUDICIAL, nos
+termos do art. 784, inciso III, do Código de Processo Civil
+(Lei n.º 13.105/2015), sujeitando-se às disposições dos
+arts. 824 e seguintes do mesmo diploma legal.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA 6ª — DAS DECLARAÇÕES DO DEVEDOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+O(A) DEVEDOR(A) declara expressamente que:
+   I.  Os dados e informações prestados neste instrumento são
+       verdadeiros, respondendo civil e criminalmente por
+       eventual falsidade (art. 299 do Código Penal);
+   II. Está ciente de que a assinatura deste documento implica
+       reconhecimento irretratável da dívida aqui confessada;
+   III.Não possui qualquer oposição ou contestação quanto à
+       origem, existência ou valor do débito reconhecido.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA 7ª — DO FORO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+As partes elegem o Foro da Comarca de Trindade, Estado de Goiás,
+para dirimir quaisquer litígios oriundos do presente instrumento,
+com expressa renúncia a qualquer outro, por mais privilegiado
+que seja.
+
+E por estarem justas e acordadas, as partes firmam o presente
+instrumento em 02 (duas) vias de igual teor e forma, na
+presença das testemunhas abaixo identificadas.
+
+Trindade – GO, ${data}.
+
+_____________________________________________
+_____________________________________________
+_____________________________________________CPF: ______________________________________
+
+
+_____________________________________________
+TESTEMUNHA 2: ______________________________
+CPF: ______________________________________
+`;
+  document.getElementById('ac-preview-texto').textContent = texto;
+  window._acordoTexto = texto;
+}
+
+function imprimirAcordo() {
+  const c = window._acordoCalc || {};
+  const logoSrc  = document.querySelector('.topbar-brand img')?.src || '';
+  const dataGer  = new Date().toLocaleString('pt-BR');
+  const data     = new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'});
+  const numAcordo = window._acordoNumero || `${new Date().getFullYear()}/001`;
+
+  // Dados do devedor
+  const nome  = (document.getElementById('ac-nome')?.value || '').trim() || '[NOME NÃO INFORMADO]';
+  const cpf   = (document.getElementById('ac-cpf')?.value  || '').trim() || '[CPF/CNPJ]';
+  const end   = (document.getElementById('ac-endereco')?.value || '').trim() || '[ENDEREÇO]';
+  const cid   = (document.getElementById('ac-cidade')?.value   || '').trim() || '[CIDADE/UF]';
+  const rep   = (document.getElementById('ac-representante')?.value || '').trim();
+  const obs   = (document.getElementById('ac-cond-pag')?.value || '').trim();
+
+  // Boletos negociados
+  const sel = c.sel || boletos.filter(b => acBoletosSelIds.has(b.id));
+  const bolsHTML = sel.map((b, i) => {
+    const vStr = normalizarData(b.vencimento);
+    const vVal = normalizarValor(b.valor);
+    const vPrc = normalizarParcela(b.parcela);
+    return `<tr>
+      <td>${i+1}</td>
+      <td>Pedido nº ${b.venda}${b.parcela && vPrc !== '—' ? ' — Parcela ' + vPrc : ''}</td>
+      <td>${vStr}</td>
+      <td style="text-align:right;font-weight:600;">R$ ${vVal}</td>
+    </tr>`;
+  }).join('');
+
+  // Forma de pagamento
+  const isBoleto      = acFormaAtiva === 'Boleto bancário parcelado';
+  const isPromissoria = acFormaAtiva === 'Nota promissória';
+  const temParcelas   = (isBoleto || isPromissoria) && window._parcelas && window._parcelas.length;
+  const tipo          = document.getElementById('ac-intervalo-tipo')?.value || 'mensal';
+  const tipoLabel     = tipo==='mensal'?'mensal':tipo==='quinzenal'?'quinzenal':tipo==='semanal'?'semanal':`a cada ${window._parcelas?.[0]?.intervDias||30} dias`;
+
+  let formaHTML = '';
+  if (temParcelas) {
+    const n        = window._parcelas.length;
+    const tipoNome = isBoleto ? 'Boleto bancário' : 'Nota promissória';
+    const parcsHTML = window._parcelas.map(p =>
+      `<tr><td>${p.num}ª ${isBoleto?'parcela':'promissória'}</td><td>${p.vencimento}</td><td style="text-align:right;font-weight:600;">R$ ${p.valor}</td></tr>`
+    ).join('');
+    formaHTML = `<p>${tipoNome} — <strong>${n}x de R$ ${window._parcelas[0].valor}</strong> (intervalo ${tipoLabel}), com os seguintes vencimentos:</p>
+    <table style="width:70%;margin:8px 0 4px 0;">
+      <thead><tr><th style="text-align:left;">Título</th><th style="text-align:left;">Vencimento</th><th style="text-align:right;">Valor</th></tr></thead>
+      <tbody>${parcsHTML}</tbody>
+    </table>`;
+  } else {
+    formaHTML = `<p>${acFormaAtiva || '[FORMA NÃO DEFINIDA]'}</p>`;
+  }
+  if (obs) formaHTML += `<p style="margin-top:6px;"><em>Observação: ${obs}</em></p>`;
+
+  // Gera páginas de promissórias separadas (uma por título)
+  let promissoriasPagesHTML = '';
+  if (isPromissoria && temParcelas) {
+    const n    = window._parcelas.length;
+    promissoriasPagesHTML = window._parcelas.map(p => `
+<div style="page-break-before:always;">
+  <!-- PROMISSÓRIA ${p.num}/${n} -->
+  <div style="border:2px solid #222;padding:28px 32px;max-width:17cm;margin:0 auto;font-family:Arial,sans-serif;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #555;padding-bottom:12px;margin-bottom:16px;">
+      <div>
+        ${logoSrc ? `<img src="${logoSrc}" style="height:44px;object-fit:contain;" />` : '<strong style="font-size:16px;color:#1a5c38;">EXPLOSÃO ALIMENTOS</strong>'}
+        <div style="font-size:9px;color:#555;margin-top:4px;">Produtos Alimentícios Explosão LTDA — CNPJ 01.121.126/0001-87</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:18px;font-weight:bold;letter-spacing:1px;">NOTA PROMISSÓRIA</div>
+        <div style="font-size:11px;color:#555;">Nº ${p.num.toString().padStart(2,'0')}/${n.toString().padStart(2,'0')} &nbsp;|&nbsp; Acordo ${numAcordo}</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
+      <div><span style="font-size:9px;color:#555;display:block;">VALOR</span>
+        <span style="font-size:22px;font-weight:bold;">R$ ${p.valor}</span></div>
+      <div style="text-align:right;"><span style="font-size:9px;color:#555;display:block;">VENCIMENTO</span>
+        <span style="font-size:16px;font-weight:bold;">${p.vencimento}</span></div>
+    </div>
+    <div style="font-size:11px;line-height:1.7;border:1px solid #ddd;padding:12px;border-radius:4px;background:#fafafa;margin-bottom:16px;">
+      Ao(s) <u>${p.vencimento}</u>, pagarei por esta única via de <strong>NOTA PROMISSÓRIA</strong>,
+      à ordem de <strong>PRODUTOS ALIMENTÍCIOS EXPLOSÃO LTDA</strong>, CNPJ 01.121.126/0001-87,
+      com sede em Trindade/GO, a importância de <strong>R$ ${p.valor}</strong>
+      (<em>${p.num}ª parcela de ${n} — referente ao Acordo nº ${numAcordo} firmado em ${data}</em>).
+      Pagável na sede da credora ou onde for indicado.
+    </div>
+    <div style="font-size:9px;color:#555;margin-bottom:12px;">
+      Devedor(a): <strong>${nome}</strong> &nbsp;|&nbsp; CPF/CNPJ: <strong>${cpf}</strong> &nbsp;|&nbsp; Endereço: ${end} — ${cid}
+    </div>
+    <div style="display:flex;gap:40px;margin-top:20px;">
+      <div style="flex:1;border-top:1px solid #333;padding-top:6px;font-size:10px;">
+        Assinatura do Emitente (Devedor)<br>
+        <span style="font-size:9px;color:#555;">${nome} — CPF/CNPJ: ${cpf}</span>
+      </div>
+      <div style="flex:1;border-top:1px solid #333;padding-top:6px;font-size:10px;">
+        Local e Data<br>
+        <span style="font-size:9px;color:#555;">Trindade/GO, ${data}</span>
+      </div>
+    </div>
+  </div>
+</div>`).join('');
+  }
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8">
+<title>Confissão de Dívida — Explosão Alimentos</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: #111;
+    max-width: 19cm;
+    margin: 0 auto;
+    padding: 1.6cm 0;
+  }
+
+  /* ── Cabeçalho ── */
+  .topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #1a5c38;
+    padding-bottom: 12px;
+    margin-bottom: 22px;
+  }
+  .topo img { height: 56px; width: auto; object-fit: contain; }
+  .topo-direita { text-align: right; }
+  .topo-titulo { font-size: 14px; font-weight: bold; color: #1a5c38; line-height: 1.3; }
+  .topo-sub { font-size: 9px; color: #666; margin-top: 3px; }
+
+  /* ── Identificação ── */
+  .id-box {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    background: #fafafa;
+  }
+  .id-titulo {
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #1a5c38;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+  }
+  .id-grid { display: grid; grid-template-columns: 130px 1fr; gap: 3px 10px; font-size: 11px; }
+  .id-label { color: #555; font-weight: bold; }
+
+  /* ── Cláusulas ── */
+  .clausula { margin-bottom: 16px; }
+  .clausula-titulo {
+    font-size: 10.5px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #1a5c38;
+    background: #f0f7f2;
+    padding: 4px 10px;
+    border-left: 3px solid #1a5c38;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+  }
+  .clausula p { margin-bottom: 6px; text-align: justify; }
+  .clausula ul, .clausula ol { margin: 4px 0 6px 20px; }
+  .clausula li { margin-bottom: 3px; text-align: justify; }
+
+  /* ── Tabelas ── */
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 11px; }
+  thead tr { background: #e8f4ed; }
+  th { padding: 5px 8px; text-align: left; font-size: 10px; font-weight: bold;
+       color: #1a5c38; border-bottom: 1.5px solid #1a5c38; }
+  td { padding: 5px 8px; border-bottom: 1px solid #e0e0e0; }
+  tr:last-child td { border-bottom: none; }
+  .total-row td { font-weight: bold; background: #f0f7f2; border-top: 1.5px solid #1a5c38; }
+
+  /* ── Cálculo ── */
+  .calc-box {
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    font-size: 11px;
+  }
+  .calc-linha { display: flex; justify-content: space-between; padding: 3px 0;
+    border-bottom: 1px dashed #e0e0e0; }
+  .calc-linha:last-child { border-bottom: none; border-top: 1.5px solid #1a5c38;
+    margin-top: 4px; padding-top: 6px; font-weight: bold; font-size: 12px; color: #1a5c38; }
+  .calc-desconto { color: #128c42; }
+  .calc-encargo  { color: #c0392b; }
+
+  /* ── Assinaturas ── */
+  .assinaturas {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-top: 28px;
+    border-top: 1.5px dashed #999;
+    padding-top: 14px;
+  }
+  .ass-titulo { font-size: 9px; font-weight: bold; color: #1a5c38;
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 20px; }
+  .ass-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 50px; }
+  .ass-item { padding-top: 44px; border-top: 1px solid #333; }
+  .ass-nome { font-weight: bold; font-size: 10.5px; }
+  .ass-sub  { font-size: 10px; color: #555; margin-top: 3px; }
+
+  /* ── Rodapé ── */
+  .rodape { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 6px;
+    font-size: 8.5px; color: #aaa; text-align: center; }
+
+  @media print {
+    body { padding: 0; }
+    @page { size: A4; margin: 1.8cm 2cm; }
+  }
+</style>
+</head><body>
+
+<!-- CABEÇALHO -->
+<div class="topo">
+  ${logoSrc
+    ? `<img src="${logoSrc}" alt="Explosão Alimentos" />`
+    : `<div style="font-size:18px;font-weight:bold;color:#1a5c38;">EXPLOSÃO ALIMENTOS</div>`}
+  <div class="topo-direita">
+    <div class="topo-titulo">Instrumento Particular de<br>Confissão de Dívida e Acordo de Pagamento</div>
+    <div class="topo-sub">Título executivo extrajudicial — art. 784, inciso III, do Código de Processo Civil</div>
+    <div style="margin-top:6px;background:#f0f7f2;border:1px solid #1a5c38;border-radius:4px;padding:3px 12px;display:inline-block;font-size:11px;font-weight:bold;color:#1a5c38;letter-spacing:0.5px;">
+      Acordo nº ${numAcordo}
+    </div>
+  </div>
+</div>
+
+<!-- QUALIFICAÇÃO DAS PARTES -->
+<div class="id-box">
+  <div class="id-titulo">Parte Credora</div>
+  <div class="id-grid">
+    <span class="id-label">Razão Social</span><span>Produtos Alimentícios Explosão LTDA</span>
+    <span class="id-label">CNPJ</span><span>01.121.126/0001-87</span>
+    <span class="id-label">Endereço</span><span>Av. Leão XIII, n.º 623, Setor Cristo Redentor — Trindade/GO</span>
+    <span class="id-label">E-mail</span><span>administracao@explosaoalimentos.com.br</span>
+  </div>
+</div>
+
+<div class="id-box">
+  <div class="id-titulo">Parte Devedora</div>
+  <div class="id-grid">
+    <span class="id-label">Nome / Razão Social</span><span>${nome}</span>
+    ${rep ? `<span class="id-label">Representante Legal</span><span>${rep}</span>` : ''}
+    <span class="id-label">CPF / CNPJ</span><span>${cpf}</span>
+    <span class="id-label">Endereço</span><span>${end}</span>
+    <span class="id-label">Cidade / UF</span><span>${cid}</span>
+  </div>
+</div>
+
+<!-- CLÁUSULA 1 -->
+<div class="clausula">
+  <div class="clausula-titulo">Cláusula 1ª — Do Objeto e Reconhecimento da Dívida</div>
+  <p>O(A) <strong>Devedor(a)</strong>, de forma livre, espontânea e sem qualquer coação, reconhece e confessa dever à <strong>Credora</strong> os valores decorrentes dos seguintes títulos em aberto:</p>
+  <table>
+    <thead><tr><th>#</th><th>Referência</th><th>Vencimento Original</th><th style="text-align:right;">Valor</th></tr></thead>
+    <tbody>${bolsHTML}</tbody>
+  </table>
+</div>
+
+<!-- CLÁUSULA 2 -->
+<div class="clausula">
+  <div class="clausula-titulo">Cláusula 2ª — Do Valor Consolidado</div>
+  <p>Considerando os encargos contratuais aplicáveis, apurados na data-base de <strong>${c.dataBase || data}</strong>, o valor total consolidado do débito é:</p>
+  <div class="calc-box">
+    <div class="calc-linha"><span>Valor principal dos títulos</span><span>R$ ${acFmt(c.totP||0)}</span></div>
+    <div class="calc-linha"><span class="calc-encargo">Multa contratual (2%)</span><span class="calc-encargo">+ R$ ${acFmt(c.totM||0)}</span></div>
+    <div class="calc-linha"><span class="calc-encargo">Juros de mora (0,033% a.d.)</span><span class="calc-encargo">+ R$ ${acFmt(c.totJ||0)}</span></div>
+    ${c.desconto > 0 ? `<div class="calc-linha"><span class="calc-desconto">Desconto concedido</span><span class="calc-desconto">- R$ ${acFmt(c.desconto)}</span></div>` : ''}
+    <div class="calc-linha"><span>💰 Valor Total do Acordo</span><span>R$ ${acFmt(c.totalFinal||0)}</span></div>
+  </div>
+</div>
+
+<!-- CLÁUSULA 3 -->
+<div class="clausula">
+  <div class="clausula-titulo">Cláusula 3ª — Da Forma e Condições de Pagamento</div>
+  ${formaHTML}
+</div>
+
+<!-- CLÁUSULA 4 -->
+<div class="clausula">
+  <div class="clausula-titulo">Cláusula 4ª — Da Mora e Penalidades</div>
+  <p>O não pagamento de qualquer valor na data avençada sujeitará o(a) Devedor(a) ao pagamento de:</p>
+  <ul>
+    <li>Multa moratória de <strong>2%</strong> sobre o saldo devedor;</li>
+    <li>Juros de mora de <strong>0,033% ao dia</strong> (equivalente a 1% ao mês);</li>
+    <li>Correção monetária pelo <strong>IGPM/FGV</strong>, ou índice que o substitua;</li>
+    <li>Honorários advocatícios de <strong>10%</strong> sobre o valor em cobrança, em caso de necessidade de execução judicial ou extrajudicial.</li>
+  </ul>
+  <p style="margin-top:6px;">O inadimplemento de qualquer parcela implicará o vencimento antecipado de todas as demais, tornando exigível a totalidade do saldo devedor remanescente de imediato.</p>
+</div>
+
+<!-- CLÁUSULA 5 -->
+<div class="clausula">
+  <div class="clausula-titulo">Cláusula 5ª — Do Título Executivo</div>
+  <p>O presente instrumento, assinado pelo(a) Devedor(a) e por duas testemunhas, constitui <strong>título executivo extrajudicial</strong>, nos termos do art. 784, inciso III, do Código de Processo Civil (Lei n.º 13.105/2015), sujeitando-se às disposições dos arts. 824 e seguintes do mesmo diploma legal.</p>
+</div>
+
+<!-- CLÁUSULA 6 -->
+<div class="clausula">
+  <div class="clausula-titulo">Cláusula 6ª — Das Declarações do Devedor</div>
+  <p>O(A) Devedor(a) declara expressamente que:</p>
+  <ol>
+    <li>Os dados e informações prestados neste instrumento são verdadeiros, respondendo civil e criminalmente por eventual falsidade (art. 299 do Código Penal);</li>
+    <li>Está ciente de que a assinatura deste documento implica reconhecimento irretratável da dívida aqui confessada;</li>
+    <li>Não possui qualquer oposição ou contestação quanto à origem, existência ou valor do débito reconhecido.</li>
+  </ol>
+</div>
+
+<!-- CLÁUSULA 7 -->
+<div class="clausula">
+  <div class="clausula-titulo">Cláusula 7ª — Do Foro</div>
+  <p>As partes elegem o Foro da <strong>Comarca de Trindade, Estado de Goiás</strong>, para dirimir quaisquer litígios oriundos do presente instrumento, com expressa renúncia a qualquer outro, por mais privilegiado que seja.</p>
+</div>
+
+<p style="margin: 18px 0 6px 0; text-align:center;">
+  E por estarem justas e acordadas, as partes firmam o presente instrumento em 02 (duas) vias de igual teor e forma, na presença das testemunhas abaixo identificadas.
+</p>
+<p style="text-align:center; font-weight:bold; margin-bottom:22px;">Trindade – GO, ${data}.</p>
+
+<!-- ASSINATURAS -->
+<div class="assinaturas">
+  <div class="ass-titulo">Assinaturas</div>
+  <div class="ass-grid">
+    <div class="ass-item">
+      <div class="ass-nome">Devedor(a)</div>
+      <div class="ass-sub">Nome: ${nome}</div>
+      <div class="ass-sub">CPF/CNPJ: ${cpf}</div>
+    </div>
+    <div class="ass-item">
+      <div class="ass-nome">Produtos Alimentícios Explosão LTDA</div>
+      <div class="ass-sub">CNPJ: 01.121.126/0001-87 — Credora</div>
+    </div>
+    <div class="ass-item">
+      <div class="ass-nome">Testemunha 1</div>
+      <div class="ass-sub">Nome: _________________________________</div>
+      <div class="ass-sub">CPF: __________________________________</div>
+    </div>
+    <div class="ass-item">
+      <div class="ass-nome">Testemunha 2</div>
+      <div class="ass-sub">Nome: _________________________________</div>
+      <div class="ass-sub">CPF: __________________________________</div>
+    </div>
+  </div>
+</div>
+
+<div class="rodape">
+  Produtos Alimentícios Explosão LTDA &nbsp;·&nbsp; CNPJ 01.121.126/0001-87 &nbsp;·&nbsp; Trindade, Goiás &nbsp;·&nbsp; Gerado em ${dataGer}
+</div>
+
+${promissoriasPagesHTML}
+
+</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 800);
+}
+
+async function confirmarAcordo() {
+  const sel = boletos.filter(b=>acBoletosSelIds.has(b.id));
+  if (!sel.length) { notify('Nenhum boleto selecionado.'); return; }
+  const agora = new Date().toLocaleString('pt-BR');
+  const c = window._acordoCalc||{};
+
+  // Monta linha de pedidos negociados
+  const pedidos = sel.map(b => {
+    const vPrc = normalizarParcela(b.parcela);
+    return `Pedido ${b.venda}${b.parcela&&vPrc!=='—'?' parc.'+vPrc:''}`;
+  }).join(', ');
+
+  // Monta detalhe do parcelamento se boleto
+  const isBoleto = acFormaAtiva === 'Boleto bancário parcelado';
+  let detalheParc = '';
+  if (isBoleto && window._parcelas && window._parcelas.length) {
+    const n = window._parcelas.length;
+    detalheParc = ` | Parcelamento: ${n}x de R$ ${window._parcelas[0].valor} | Vencimentos: ` +
+      window._parcelas.map(p=>`${p.num}ª ${p.vencimento}`).join(', ');
+  }
+
+  const dadosCli = `CPF/CNPJ: ${document.getElementById('ac-cpf').value} | End: ${document.getElementById('ac-endereco').value} | Tel: ${document.getElementById('ac-fone').value}`;
+  const obsExtra = document.getElementById('ac-cond-pag').value.trim();
+
+  const numAcordo = window._acordoNumero || `${new Date().getFullYear()}/???`;
+
+  const obs = `ACORDO REALIZADO` +
+    ` | Nº ${numAcordo}` +
+    ` | Pedidos negociados: ${pedidos}` +
+    ` | Total: R$ ${acFmt(c.totalFinal||0)}` +
+    ` | Forma: ${acFormaAtiva}` +
+    detalheParc +
+    (obsExtra ? ` | Obs: ${obsExtra}` : '') +
+    ` | ${dadosCli}`;
+
+  let ok = 0;
+  for (const b of sel) {
+    const r = await gsCall({
+      action:'addTratativa', boletoId:b.id,
+      status:'acordo_realizado', canal:'Acordo',
+      obs, dataProm:'', proximo:'', resp:'',
+      serasa:b.serasa||'nao', dataHora:agora, valorRecebido:''
+    });
+    if (r) ok++;
+  }
+  notify(`✓ Acordo registrado! ${ok} boleto(s) baixado(s).`);
+  fecharModal('modal-acordo');
+  await carregarDados();
+}
+
+// Fechar modal acordo clicando fora — inicializa na primeira abertura
+let _acordoModalInited = false;
 </script>
+<!-- Modal Acordos -->
+<div class="overlay" id="modal-acordo">
+  <div class="modal modal-acordo">
+    <div class="modal-header">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="modal-title">🤝 Formalizar Acordo</div>
+          <div id="ac-num-badge" style="background:var(--accent-bg);color:var(--accent);font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;border:1px solid var(--accent);letter-spacing:0.5px;min-width:90px;text-align:center;">⏳ gerando...</div>
+        </div>
+        <div class="modal-sub" id="ac-sub">Selecione os boletos e calcule o valor</div>
+      </div>
+      <button class="btn-close" onclick="fecharModal('modal-acordo')">×</button>
+    </div>
+    <div class="step-bar">
+      <div class="step-item active" id="step-lbl-1">① Boletos</div>
+      <div class="step-item" id="step-lbl-2">② Calcular</div>
+      <div class="step-item" id="step-lbl-3">③ Cliente</div>
+      <div class="step-item" id="step-lbl-4">④ Pagamento</div>
+      <div class="step-item" id="step-lbl-5">⑤ Confirmar</div>
+    </div>
+    <!-- STEP 1 -->
+    <div class="acordo-step active" id="ac-step-1">
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>Filtrar cliente</label>
+        <input type="text" id="ac-filtro-cliente" placeholder="Digite o nome..." oninput="renderBoletosAcordo()" style="width:100%;" />
+      </div>
+      <div class="boleto-sel-list" id="ac-boleto-lista"></div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text2);" id="ac-sel-resumo">Nenhum boleto selecionado.</div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-primary" onclick="acStep(2)">Próximo →</button>
+      </div>
+    </div>
+    <!-- STEP 2 -->
+    <div class="acordo-step" id="ac-step-2">
+      <div class="form-row">
+        <div class="form-group"><label>Data base do cálculo</label><input type="date" id="ac-data-calc" onchange="calcAcordo()" /></div>
+        <div class="form-group"><label>Multa (%)</label><input type="number" id="ac-multa" value="2" step="0.01" oninput="calcAcordo()" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Juros ao dia (%)</label><input type="number" id="ac-juros-dia" value="0.033" step="0.001" oninput="calcAcordo()" /></div>
+        <div class="form-group"><label>Desconto nos encargos (R$)</label><input type="number" id="ac-desconto" value="0" step="0.01" oninput="calcAcordo()" /></div>
+      </div>
+      <div class="acordo-calc-box" id="ac-calc-box"><div class="calc-row"><span class="calc-label">Carregando...</span></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;">
+        <button class="btn" onclick="acStep(1)">← Voltar</button>
+        <button class="btn btn-primary" onclick="acStep(3)">Próximo →</button>
+      </div>
+    </div>
+    <!-- STEP 3 -->
+    <div class="acordo-step" id="ac-step-3">
+      <div class="form-row">
+        <div class="form-group"><label>Nome completo / Razão Social</label><input type="text" id="ac-nome" placeholder="Nome conforme documento" /></div>
+        <div class="form-group"><label>CPF / CNPJ</label><input type="text" id="ac-cpf" placeholder="000.000.000-00" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Endereço completo</label><input type="text" id="ac-endereco" placeholder="Rua, número, bairro" /></div>
+        <div class="form-group"><label>Cidade / Estado</label><input type="text" id="ac-cidade" placeholder="Trindade / GO" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="ac-fone" placeholder="(63) 99999-9999" /></div>
+        <div class="form-group"><label>E-mail</label><input type="text" id="ac-email" placeholder="cliente@email.com" /></div>
+      </div>
+      <div class="form-group"><label>Representante legal (se PJ)</label><input type="text" id="ac-representante" placeholder="Nome do sócio/responsável" /></div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;">
+        <button class="btn" onclick="acStep(2)">← Voltar</button>
+        <button class="btn btn-primary" onclick="acStep(4)">Próximo →</button>
+      </div>
+    </div>
+    <!-- STEP 4 -->
+    <div class="acordo-step" id="ac-step-4">
+      <div style="margin-bottom:12px;font-size:13px;color:var(--text2);">Selecione a forma de pagamento negociada:</div>
+      <div class="forma-grid">
+        <div class="forma-btn" id="f-pix"         onclick="setFormaAcordo('Pagamento à vista via Pix')">💰 À vista — Pix</div>
+        <div class="forma-btn" id="f-boleto"      onclick="setFormaAcordo('Boleto bancário parcelado')">🧾 Boleto parcelado</div>
+        <div class="forma-btn" id="f-promissoria" onclick="setFormaAcordo('Nota promissória')">📄 Nota promissória</div>
+        <div class="forma-btn" id="f-cheque"      onclick="setFormaAcordo('Cheque pré-datado')">📝 Cheque pré-datado</div>
+        <div class="forma-btn" id="f-deposito"    onclick="setFormaAcordo('Depósito/transferência bancária')">🏦 Depósito bancário</div>
+        <div class="forma-btn" id="f-outro"       onclick="setFormaAcordo('A combinar')">⚙️ Outro / A combinar</div>
+      </div>
+
+      <!-- Painel de parcelamento — Boleto OU Promissória -->
+      <div id="ac-boleto-painel" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px;" id="ac-painel-titulo">Parcelamento</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº de parcelas</label>
+            <select id="ac-num-parcelas" onchange="calcParcelas()">
+              <option value="1">1x (à vista)</option>
+              <option value="2">2x</option>
+              <option value="3" selected>3x</option>
+              <option value="4">4x</option>
+              <option value="5">5x</option>
+              <option value="6">6x</option>
+              <option value="8">8x</option>
+              <option value="10">10x</option>
+              <option value="12">12x</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Vencimento 1ª parcela</label>
+            <input type="date" id="ac-venc-1parc" onchange="calcParcelas()" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Intervalo entre parcelas</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="ac-intervalo-tipo" onchange="calcParcelas()" style="flex:1;">
+                <option value="mensal">Mensal (30 dias)</option>
+                <option value="quinzenal">Quinzenal (15 dias)</option>
+                <option value="semanal">Semanal (7 dias)</option>
+                <option value="dias">Personalizado (dias)</option>
+              </select>
+              <input type="number" id="ac-intervalo-dias" value="30" min="1" max="365"
+                oninput="calcParcelas()"
+                style="width:80px;display:none;" placeholder="dias" />
+            </div>
+          </div>
+          <div class="form-group" style="align-self:flex-end;">
+            <div id="ac-parcelas-total" style="font-size:12px;color:var(--text2);padding-bottom:8px;"></div>
+          </div>
+        </div>
+        <div id="ac-parcelas-preview" style="font-size:12px;margin-top:4px;"></div>
+      </div>
+
+      <div class="form-group" style="margin-top:8px;">
+        <label>Observações adicionais (opcional)</label>
+        <textarea id="ac-cond-pag" rows="2" placeholder="Ex: Pagamento via Pix — chave CNPJ 00.000.000/0001-00. Enviar comprovante pelo WhatsApp."></textarea>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;">
+        <button class="btn" onclick="acStep(3)">← Voltar</button>
+        <button class="btn btn-primary" onclick="acStep(5)">Pré-visualizar →</button>
+      </div>
+    </div>
+    <!-- STEP 5 -->
+    <div class="acordo-step" id="ac-step-5">
+      <div class="preview-acordo" id="ac-preview-texto"></div>
+      <div style="background:var(--warn-bg);border:1px solid #f0d060;border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--warn-text);display:flex;gap:8px;">
+        <span>⚠️</span><span>Ao confirmar, os boletos selecionados serão marcados como <strong>Acordo Realizado</strong> e baixados. Registre os novos boletos no Fácil123 e importe normalmente.</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn" onclick="acStep(4)">← Editar</button>
+        <button class="btn" style="border-color:#25d366;color:#128c42;" onclick="imprimirAcordo()">🖨️ Imprimir / PDF</button>
+        <button id="btn-confirmar-acordo" class="btn btn-primary" style="flex:1;" onclick="confirmarAcordo()">✓ Confirmar e baixar boletos</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
